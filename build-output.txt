@@ -1,0 +1,46 @@
+
+> critketers@0.1.0 build
+> prisma generate && next build
+
+Prisma schema loaded from prisma\schema.prisma
+
+✔ Generated Prisma Client (v6.19.1) to .\node_modules\@prisma\client in 339ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local, .env
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 10.2s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/8) ...
+  Generating static pages using 7 workers (2/8) 
+  Generating static pages using 7 workers (4/8) 
+  Generating static pages using 7 workers (6/8) 
+✓ Generating static pages using 7 workers (8/8) in 798.4ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/matches
+├ ƒ /api/matches/[id]
+├ ƒ /api/matches/[id]/innings
+├ ƒ /api/matches/[id]/innings/[inningsId]/balls
+├ ƒ /api/matches/[id]/innings/[inningsId]/extras
+├ ƒ /api/matches/[id]/innings/[inningsId]/wickets
+├ ƒ /api/teams
+├ ƒ /api/teams/[id]
+├ ƒ /api/teams/[id]/players
+├ ○ /matches
+├ ○ /teams
+└ ƒ /teams/[id]
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
