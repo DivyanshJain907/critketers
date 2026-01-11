@@ -208,7 +208,7 @@ export default function SignupPage() {
                   type="password"
                   value={registrationKey}
                   onChange={(e) => setRegistrationKey(e.target.value)}
-                  required={role !== 'VIEWER'}
+                  required={true}
                   className="w-full px-4 py-2 border border-slate-700 bg-slate-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Enter your registration key..."
                 />
