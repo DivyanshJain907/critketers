@@ -220,7 +220,7 @@ NEXTAUTH_URL=<your-production-url>
 ### Recording a Ball
 1. Select striker and non-striker
 2. Select bowler
-3. Enter runs (0-6)
+3. Enter runs
 4. Select ball type (Legal, Wide, No-ball, etc.)
 
 ### Recording a Wicket
