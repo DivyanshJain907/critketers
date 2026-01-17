@@ -3,6 +3,7 @@ import {
   getOversCollection,
   getBallsCollection,
   getBattingStatsCollection,
+  getMatchesCollection,
 } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
@@ -49,6 +50,40 @@ export async function POST(
     const oversCollection = await getOversCollection();
     const ballsCollection = await getBallsCollection();
     const battingStatsCollection = await getBattingStatsCollection();
+    const matchesCollection = await getMatchesCollection();
+
+    // Fetch match to check oversLimit
+    const match = await matchesCollection.findOne({
+      _id: new ObjectId(id),
+    });
+
+    if (!match) {
+      return NextResponse.json(
+        { error: "Match not found" },
+        { status: 404 }
+      );
+    }
+
+    // Fetch current innings to check total balls
+    const innings = await inningsCollection.findOne({
+      _id: new ObjectId(inningsId),
+    });
+
+    if (!innings) {
+      return NextResponse.json(
+        { error: "Innings not found" },
+        { status: 404 }
+      );
+    }
+
+    // Check if adding this ball would exceed oversLimit
+    const maxBalls = match.oversLimit * 6;
+    if (innings.totalBalls >= maxBalls) {
+      return NextResponse.json(
+        { error: `Over limit reached. Maximum ${match.oversLimit} overs (${maxBalls} balls) allowed.` },
+        { status: 400 }
+      );
+    }
 
     // Get or create over
     let over = await oversCollection.findOne({

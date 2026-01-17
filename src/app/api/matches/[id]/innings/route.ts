@@ -51,6 +51,12 @@ export async function POST(
       );
     }
 
+    // Update match status to ONGOING when innings starts
+    await matchesCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { status: "ONGOING", updatedAt: new Date() } }
+    );
+
     const result = await inningsCollection.insertOne({
       matchId: id,
       teamId,

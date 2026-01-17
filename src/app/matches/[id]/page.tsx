@@ -21,6 +21,7 @@ interface Ball {
   overNumber: number;
   runs: number;
   ballType: string;
+  strikerPlayerId?: string;
 }
 
 interface AnimatedBall {
@@ -290,12 +291,16 @@ export default function MatchDetailPage() {
 
   const handleRecordWicket = async () => {
     if (!match || !match.innings[selectedInnings]) return;
+    if (!strikerPlayerId) {
+      setError('Select striker first');
+      return;
+    }
     if (!bowlerId) {
       setError('Select bowler first');
       return;
     }
-    if (!wicketForm.playerOutId) {
-      setError('Select player out');
+    if (!wicketForm.wicketType) {
+      setError('Select wicket type');
       return;
     }
 
@@ -309,12 +314,6 @@ export default function MatchDetailPage() {
 
     // If no ball exists, create one automatically (wicket counts as a ball)
     if (!lastBall) {
-      if (!strikerPlayerId) {
-        setError('Select striker first');
-        setIsSaving(false);
-        return;
-      }
-
       try {
         const overNumber = Math.floor(innings.totalBalls / 6);
         const nonStrikerId = match.teamA.players.find(p => p.id !== strikerPlayerId)?.id || '';
@@ -367,7 +366,7 @@ export default function MatchDetailPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ballId: lastBall.id,
-            playerOutId: wicketForm.playerOutId,
+            playerOutId: strikerPlayerId,
             bowlerId,
             fielderId: wicketForm.fielderId || null,
             wicketType: wicketForm.wicketType,
@@ -381,10 +380,13 @@ export default function MatchDetailPage() {
         setError('');
         setShowWicketForm(false);
         setWicketForm({ playerOutId: '', wicketType: 'BOWLED', fielderId: '' });
+        setStrikerPlayerId(''); // Clear striker since they're now out
         
         // Refetch to get the updated data with longer delay to ensure DB updates are complete
-        setTimeout(() => {
-          fetchMatch();
+        setTimeout(async () => {
+          await fetchMatch();
+          // Check if all batsmen are out after data is fetched
+          await checkAndStartNextInningsIfAllOut();
         }, 500);
       } else {
         setError(data.error || 'Failed to record wicket');
@@ -396,6 +398,178 @@ export default function MatchDetailPage() {
       setIsSaving(false);
     }
   };
+
+  const isInningsComplete = (inn: Innings, battingTeam: Team) => {
+    const allOut = (inn.wickets || []).length >= battingTeam.players.length - 1;
+    const oversDone = inn.totalBalls >= (match?.oversLimit ?? 0) * 6;
+    return allOut || oversDone;
+  };
+
+  const computeResult = () => {
+    if (!match || match.innings.length < 2) return null;
+
+    const teamAScore = match.innings
+      .filter((inn) => inn.teamId === match.teamA.id)
+      .reduce((sum, inn) => sum + (inn.totalRuns || 0), 0);
+    const teamBScore = match.innings
+      .filter((inn) => inn.teamId === match.teamB.id)
+      .reduce((sum, inn) => sum + (inn.totalRuns || 0), 0);
+
+    if (teamAScore === teamBScore) {
+      return { text: 'Match Tied', winner: null, margin: 0 };
+    }
+
+    if (teamAScore > teamBScore) {
+      return {
+        text: `${match.teamA.name} won by ${teamAScore - teamBScore} runs`,
+        winner: match.teamA.name,
+        margin: teamAScore - teamBScore,
+      };
+    }
+
+    return {
+      text: `${match.teamB.name} won by ${teamBScore - teamAScore} runs`,
+      winner: match.teamB.name,
+      margin: teamBScore - teamAScore,
+    };
+  };
+
+  const getPlayerName = (playerId: string) => {
+    if (!match) return playerId;
+    const pA = match.teamA.players.find((p) => p.id === playerId);
+    if (pA) return pA.name;
+    const pB = match.teamB.players.find((p) => p.id === playerId);
+    return pB ? pB.name : playerId;
+  };
+
+  const computeBattingStats = () => {
+    if (!match) return [] as { playerId: string; runs: number }[];
+    const totals: Record<string, number> = {};
+    match.innings.forEach((inn) => {
+      (inn.balls || []).forEach((b) => {
+        // Only legal balls count toward batter runs (runs already include off-bat)
+        if (!b.strikerPlayerId) return;
+        totals[b.strikerPlayerId] = (totals[b.strikerPlayerId] || 0) + (b.runs || 0);
+      });
+    });
+    return Object.entries(totals)
+      .map(([playerId, runs]) => ({ playerId, runs }))
+      .sort((a, b) => b.runs - a.runs)
+      .slice(0, 5);
+  };
+
+  const computeBowlingStats = () => {
+    if (!match) return [] as { playerId: string; wickets: number }[];
+    const totals: Record<string, number> = {};
+    match.innings.forEach((inn) => {
+      (inn.wickets || []).forEach((w) => {
+        totals[w.bowlerId] = (totals[w.bowlerId] || 0) + 1;
+      });
+    });
+    return Object.entries(totals)
+      .map(([playerId, wickets]) => ({ playerId, wickets }))
+      .sort((a, b) => b.wickets - a.wickets)
+      .slice(0, 5);
+  };
+
+  const checkAndStartNextInningsIfAllOut = async () => {
+    // Fetch the latest match data to check current state
+    try {
+      const response = await fetch(`/api/matches/${matchId}`);
+      const updatedMatch = await response.json();
+      
+      if (!updatedMatch || !updatedMatch.innings[selectedInnings]) return;
+
+      const currentInnings = updatedMatch.innings[selectedInnings];
+      const batingTeam = updatedMatch.teamA.id === currentInnings.teamId ? updatedMatch.teamA : updatedMatch.teamB;
+      const fieldingTeam = updatedMatch.teamA.id === currentInnings.teamId ? updatedMatch.teamB : updatedMatch.teamA;
+      
+      // Get all out players
+      const outPlayers = (currentInnings.wickets || []).map((w: any) => w.playerOutId);
+      
+      // Check if all batsmen are out (all players minus 1 are out - at least 1 must bat)
+      const allOut = outPlayers.length >= batingTeam.players.length - 1;
+      
+      console.log(`Checking all-out: Out=${outPlayers.length}, Total=${batingTeam.players.length}, AllOut=${allOut}, Innings=${updatedMatch.innings.length}`);
+      
+      if (allOut && updatedMatch.innings.length < 2) {
+        // All out and no second innings yet - start the other team's innings
+        console.log('All batsmen out! Starting next innings for', fieldingTeam.name);
+        
+        // Pick default opener/bowler (next batting team opener, previous batting team bowler)
+        const openingBatsmanId = fieldingTeam.players[0]?.id || '';
+        const openingBowlerId = batingTeam.players[0]?.id || '';
+
+        if (!openingBatsmanId || !openingBowlerId) {
+          console.error('Cannot auto-start innings: missing opener or bowler');
+          return;
+        }
+
+        // Start the innings
+        const inningsResponse = await fetch(`/api/matches/${matchId}/innings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            teamId: fieldingTeam.id,
+            inningsNumber: 2,
+            openingBatsmanId,
+            openingBowlerId,
+          }),
+        });
+
+        if (inningsResponse.ok) {
+          console.log('Successfully started innings for', fieldingTeam.name);
+          
+          // Refetch match data after starting innings
+          const freshResponse = await fetch(`/api/matches/${matchId}`);
+          const freshMatch = await freshResponse.json();
+          
+          // Update match state and switch to the new innings
+          setMatch(freshMatch);
+          // Switch to the newly created innings (last in list)
+          setSelectedInnings(Math.max(0, (freshMatch.innings?.length || 1) - 1));
+          setStrikerPlayerId('');
+          setBowlerId('');
+          setCurrentRuns(0);
+        } else {
+          const error = await inningsResponse.json();
+          console.error('Failed to start innings:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking all-out status:', error);
+    }
+  };
+
+  const matchComplete = (() => {
+    if (!match || match.innings.length < 2) return false;
+    const secondInnings = match.innings[1];
+    const battingTeam = match.teamA.id === secondInnings.teamId ? match.teamA : match.teamB;
+    return isInningsComplete(secondInnings, battingTeam);
+  })();
+
+  useEffect(() => {
+    if (!matchComplete || !match || match.status === 'COMPLETED') return;
+
+    const markComplete = async () => {
+      try {
+        const res = await fetch(`/api/matches/${matchId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'COMPLETED' }),
+        });
+
+        if (res.ok) {
+          const updated = await res.json();
+          setMatch((prev) => (prev ? { ...prev, status: updated.status } : updated));
+        }
+      } catch (error) {
+        console.error('Failed to mark match as complete:', error);
+      }
+    };
+
+    markComplete();
+  }, [matchComplete, matchId, match?.status]);
 
   if (loading) {
     return (
@@ -429,6 +603,83 @@ export default function MatchDetailPage() {
 
         {!match ? (
           <div className="text-center text-gray-400">Match not found</div>
+        ) : matchComplete ? (
+          <div className="relative overflow-hidden bg-slate-900/80 rounded-2xl shadow-2xl p-6 border border-slate-700">
+            {/* Firecracker/confetti layers */}
+            <div className="absolute inset-0 pointer-events-none mix-blend-screen opacity-70 animate-pulse" style={{ background: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.15), transparent 25%), radial-gradient(circle at 80% 30%, rgba(255,0,128,0.15), transparent 30%), radial-gradient(circle at 40% 70%, rgba(0,200,255,0.15), transparent 25%), radial-gradient(circle at 70% 80%, rgba(255,200,0,0.15), transparent 20%)' }} />
+            <div className="absolute inset-0 pointer-events-none animate-[spin_22s_linear_infinite]" style={{ background: 'conic-gradient(from 0deg, rgba(255,0,128,0.12), rgba(0,200,255,0.12), rgba(0,255,128,0.12), rgba(255,200,0,0.12), rgba(255,0,128,0.12))' }} />
+            <div className="relative z-10">
+              <div className="text-center mb-4">
+                <div className="inline-flex items-center gap-2 bg-green-500 text-slate-900 px-4 py-2 rounded-full font-bold shadow-lg">
+                  🏁 Match Complete
+                </div>
+              </div>
+
+              {(() => {
+                const result = computeResult();
+                if (!result) return null;
+                const teamAScore = match.innings.filter(i => i.teamId === match.teamA.id).reduce((s, i) => s + (i.totalRuns || 0), 0);
+                const teamBScore = match.innings.filter(i => i.teamId === match.teamB.id).reduce((s, i) => s + (i.totalRuns || 0), 0);
+                const topBatters = computeBattingStats();
+                const topBowlers = computeBowlingStats();
+
+                return (
+                  <div className="space-y-6">
+                    <div className="bg-slate-800/80 rounded-xl p-4 border border-slate-700 shadow-inner">
+                      <p className="text-green-300 font-bold text-lg mb-1">{result.text}</p>
+                      <p className="text-slate-200 text-sm">Manhattan finish! 🚀</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-sm text-white">
+                      <div className="bg-slate-800 rounded-lg p-3 border border-slate-700 shadow">
+                        <p className="font-bold flex items-center gap-2">{match.teamA.name}</p>
+                        <p className="text-cyan-300 text-2xl font-extrabold">{teamAScore}</p>
+                        <p className="text-xs text-slate-300">Runs</p>
+                      </div>
+                      <div className="bg-slate-800 rounded-lg p-3 border border-slate-700 shadow">
+                        <p className="font-bold flex items-center gap-2">{match.teamB.name}</p>
+                        <p className="text-cyan-300 text-2xl font-extrabold">{teamBScore}</p>
+                        <p className="text-xs text-slate-300">Runs</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-slate-800/80 rounded-lg p-4 border border-slate-700 shadow">
+                        <p className="text-white font-bold mb-2">Top Batters</p>
+                        <div className="space-y-2 text-sm">
+                          {topBatters.map((p, idx) => (
+                            <div key={p.playerId} className="flex items-center justify-between bg-slate-900/60 rounded px-3 py-2">
+                              <div className="flex items-center gap-2 text-slate-100">
+                                <span className="text-cyan-300 font-bold">#{idx + 1}</span>
+                                <span>{getPlayerName(p.playerId)}</span>
+                              </div>
+                              <span className="text-cyan-200 font-bold">{p.runs} runs</span>
+                            </div>
+                          ))}
+                          {topBatters.length === 0 && <p className="text-slate-400 text-xs">No batting data</p>}
+                        </div>
+                      </div>
+                      <div className="bg-slate-800/80 rounded-lg p-4 border border-slate-700 shadow">
+                        <p className="text-white font-bold mb-2">Top Bowlers</p>
+                        <div className="space-y-2 text-sm">
+                          {topBowlers.map((p, idx) => (
+                            <div key={p.playerId} className="flex items-center justify-between bg-slate-900/60 rounded px-3 py-2">
+                              <div className="flex items-center gap-2 text-slate-100">
+                                <span className="text-amber-300 font-bold">#{idx + 1}</span>
+                                <span>{getPlayerName(p.playerId)}</span>
+                              </div>
+                              <span className="text-amber-200 font-bold">{p.wickets} wkts</span>
+                            </div>
+                          ))}
+                          {topBowlers.length === 0 && <p className="text-slate-400 text-xs">No bowling data</p>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
         ) : match.innings.length === 0 ? (
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl shadow-2xl p-8 text-center border border-slate-700">
             <h2 className="text-3xl font-bold text-white mb-2">🎯 Start Innings</h2>
@@ -468,11 +719,47 @@ export default function MatchDetailPage() {
                     </div>
 
                     {/* Status Indicator */}
-                    <div className="bg-green-500 text-slate-900 px-2 py-1 rounded font-bold text-xs">
-                      LIVE
-                    </div>
+                    {(() => {
+                      const currentInnings = match.innings[selectedInnings];
+                      const batingTeam = match.teamA.id === currentInnings.teamId ? match.teamA : match.teamB;
+                      const outPlayers = (currentInnings.wickets || []).map((w: any) => w.playerOutId);
+                      const allOut = outPlayers.length >= batingTeam.players.length - 1;
+                      
+                      return (
+                        <div className={`${allOut ? 'bg-red-600' : 'bg-green-500'} text-slate-900 px-2 py-1 rounded font-bold text-xs`}>
+                          {allOut ? 'ALL OUT' : 'LIVE'}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
+
+                {/* Manual start next innings if auto-start failed */}
+                {(() => {
+                  const inningsCount = match.innings.length;
+                  const currentInnings = match.innings[selectedInnings];
+                  const battingTeam = match.teamA.id === currentInnings.teamId ? match.teamA : match.teamB;
+                  const fieldingTeam = match.teamA.id === currentInnings.teamId ? match.teamB : match.teamA;
+                  const outPlayers = (currentInnings.wickets || []).map((w: any) => w.playerOutId);
+                  const allOut = outPlayers.length >= battingTeam.players.length - 1;
+                  const nextInningsAvailable = inningsCount < 2 && allOut;
+
+                  if (!nextInningsAvailable) return null;
+
+                  return (
+                    <div className="bg-slate-900 rounded-lg p-4 mb-4 border border-slate-700">
+                      <p className="text-white text-sm font-bold mb-2">All batsmen out</p>
+                      <p className="text-gray-300 text-xs mb-3">Start {fieldingTeam.name} innings now.</p>
+                      <button
+                        onClick={() => startInnings(fieldingTeam.id)}
+                        disabled={isSaving}
+                        className="w-full py-3 px-4 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold text-sm transition"
+                      >
+                        {isSaving ? '⏳ Starting...' : `▶ Start ${fieldingTeam.name} Innings`}
+                      </button>
+                    </div>
+                  );
+                })()}
 
                 {/* Player Selection */}
                 <div className="grid grid-cols-2 gap-3 mb-4">
@@ -482,9 +769,28 @@ export default function MatchDetailPage() {
                     className="px-3 py-2 bg-slate-800 border border-slate-600 text-white rounded-lg focus:outline-none focus:border-blue-500 text-sm"
                   >
                     <option value="">⚾ Striker</option>
-                    {match.teamA.players.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
+                    {match.innings[selectedInnings].teamId && match.teamA.id === match.innings[selectedInnings].teamId
+                      ? match.teamA.players.map((p) => {
+                          // Check if this player has been given out
+                          const isOut = (match.innings[selectedInnings].wickets || []).some(
+                            (w: any) => w.playerOutId === p.id
+                          );
+                          if (isOut) return null; // Don't show out players
+                          return (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                          );
+                        })
+                      : match.teamB.players.map((p) => {
+                          // Check if this player has been given out
+                          const isOut = (match.innings[selectedInnings].wickets || []).some(
+                            (w: any) => w.playerOutId === p.id
+                          );
+                          if (isOut) return null; // Don't show out players
+                          return (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                          );
+                        })
+                    }
                   </select>
                   <select
                     value={bowlerId}
@@ -492,21 +798,55 @@ export default function MatchDetailPage() {
                     className="px-3 py-2 bg-slate-800 border border-slate-600 text-white rounded-lg focus:outline-none focus:border-green-500 text-sm"
                   >
                     <option value="">🎯 Bowler</option>
-                    {match.teamB.players.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
+                    {match.innings[selectedInnings].teamId && match.teamA.id === match.innings[selectedInnings].teamId
+                      ? match.teamB.players.map((p) => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))
+                      : match.teamA.players.map((p) => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))
+                    }
                   </select>
                 </div>
 
                 {/* Large Runs Display - Clickable to Complete Ball */}
-                <button
-                  onClick={handleCompleteBall}
-                  disabled={isSaving}
-                  className="w-full bg-gradient-to-br from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-xl p-8 mb-4 text-center shadow-2xl transition transform hover:scale-105 active:scale-95 disabled:opacity-50"
-                >
-                  <p className="text-xs font-semibold mb-2 opacity-90">TAP TO COMPLETE BALL</p>
-                  <h3 className="text-7xl font-bold">{currentRuns}</h3>
-                </button>
+                {(() => {
+                  const innings = match?.innings[selectedInnings];
+                  const maxBalls = (match?.oversLimit ?? 0) * 6;
+                  const isOverLimitReached: boolean = innings ? innings.totalBalls >= maxBalls : false;
+                  
+                  return (
+                    <div>
+                      <button
+                        onClick={handleCompleteBall}
+                        disabled={isSaving || isOverLimitReached}
+                        className="w-full bg-gradient-to-br from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-xl p-8 mb-4 text-center shadow-2xl transition transform hover:scale-105 active:scale-95 disabled:opacity-50"
+                      >
+                        <p className="text-xs font-semibold mb-2 opacity-90">TAP TO COMPLETE BALL</p>
+                        <h3 className="text-7xl font-bold">{currentRuns}</h3>
+                      </button>
+                      {isOverLimitReached && (
+                        <div className="text-center mb-4">
+                          <p className="text-red-500 font-bold mb-3">
+                            ⚠️ Over limit ({match.oversLimit} overs) reached!
+                          </p>
+                          {match.innings[selectedInnings]?.teamId === match.teamA.id && match.innings.length === 1 && (
+                            <button
+                              onClick={() => startInnings(match.teamB.id)}
+                              disabled={isSaving}
+                              className="w-full py-3 px-4 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold text-base transition"
+                            >
+                              {isSaving ? '⏳ Starting...' : `▶ Start ${match.teamB.name} Innings`}
+                            </button>
+                          )}
+                          {match.innings[selectedInnings]?.teamId === match.teamB.id && match.innings.length === 2 && (
+                            <p className="text-yellow-400 font-semibold">✅ Match Complete!</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Scoring Buttons - Minimal */}
                 <div className="grid grid-cols-3 gap-2 mb-4">
@@ -565,7 +905,10 @@ export default function MatchDetailPage() {
 
                 {/* Wicket - Simple Button */}
                 <button 
-                  onClick={() => setShowWicketForm(true)}
+                  onClick={() => {
+                    setShowWicketForm(true);
+                    setWicketForm({ playerOutId: strikerPlayerId, wicketType: 'BOWLED', fielderId: '' });
+                  }}
                   disabled={isSaving || !bowlerId}
                   className="w-full bg-red-700 hover:bg-red-800 disabled:bg-slate-600 text-white font-bold py-3 rounded-lg text-sm mb-4 transition"
                 >
@@ -578,28 +921,26 @@ export default function MatchDetailPage() {
                     <div className="bg-slate-900 rounded-lg p-6 border border-red-600 max-w-md w-full">
                       <h3 className="text-white text-lg font-bold mb-4">Record Wicket</h3>
                       
-                      {/* Player Out Selection */}
+                      {/* Player Out - Auto-filled with current striker */}
                       <div className="mb-4">
                         <label className="text-white text-sm font-bold mb-2 block">Player Out</label>
-                        <select
-                          value={wicketForm.playerOutId}
-                          onChange={(e) => setWicketForm({ ...wicketForm, playerOutId: e.target.value })}
-                          className="w-full bg-slate-800 text-white rounded p-2 border border-slate-700"
-                        >
-                          <option value="">Select player</option>
-                          {match.innings[selectedInnings].teamId && match.teamA.id === match.innings[selectedInnings].teamId
-                            ? match.teamA.players.map((p) => (
-                                <option key={p.id} value={p.id}>
-                                  {p.name}
-                                </option>
-                              ))
-                            : match.teamB.players.map((p) => (
-                                <option key={p.id} value={p.id}>
-                                  {p.name}
-                                </option>
-                              ))
-                          }
-                        </select>
+                        <div className="w-full bg-slate-800 text-white rounded p-2 border border-slate-700">
+                          {strikerPlayerId ? (
+                            <>
+                              {match.teamA.id === match.innings[selectedInnings].teamId
+                                ? match.teamA.players.find((p: any) => p.id === strikerPlayerId)?.name
+                                : match.teamB.players.find((p: any) => p.id === strikerPlayerId)?.name
+                              }
+                              <input 
+                                type="hidden" 
+                                value={strikerPlayerId}
+                                onChange={(e) => setWicketForm({ ...wicketForm, playerOutId: e.target.value })}
+                              />
+                            </>
+                          ) : (
+                            <span className="text-gray-400">Select striker first</span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Wicket Type Selection */}
@@ -630,13 +971,13 @@ export default function MatchDetailPage() {
                             className="w-full bg-slate-800 text-white rounded p-2 border border-slate-700"
                           >
                             <option value="">Select fielder</option>
-                            {match.teamA.id === bowlerId || match.teamA.players.some(p => p.id === bowlerId)
-                              ? match.teamA.players.map((p) => (
+                            {match.innings[selectedInnings].teamId && match.teamB.id === match.innings[selectedInnings].teamId
+                              ? match.teamA.players.map((p: any) => (
                                   <option key={p.id} value={p.id}>
                                     {p.name}
                                   </option>
                                 ))
-                              : match.teamB.players.map((p) => (
+                              : match.teamB.players.map((p: any) => (
                                   <option key={p.id} value={p.id}>
                                     {p.name}
                                   </option>
@@ -671,28 +1012,48 @@ export default function MatchDetailPage() {
                 )}
 
                 {/* Last Balls - Over Wise Display */}
-                {match.innings[selectedInnings].balls && match.innings[selectedInnings].balls.length > 0 && (
+                {match.innings && match.innings[selectedInnings] && match.innings[selectedInnings].balls && match.innings[selectedInnings].balls.length > 0 ? (
                   <div className="bg-slate-900 rounded-lg p-4 mb-4 border border-slate-700">
                     <p className="text-white text-xs font-bold mb-3">Last Balls (Over Wise)</p>
                     <div className="space-y-2">
                       {(() => {
-                        // Group balls by over
+                        // Group balls by over - only count legal balls for over number
                         const ballsByOver: Record<number, any[]> = {};
-                        match.innings[selectedInnings].balls.forEach((ball: any, idx: number) => {
+                        let currentOverNum = 0;
+                        let legalBallsInOver = 0;
+
+                        // First, add all balls in chronological order
+                        match.innings[selectedInnings].balls.forEach((ball: any) => {
+                          // Use overNumber from ball if available
                           let overNum: number;
-                          if (ball.over && typeof ball.over.overNumber === 'number') {
-                            overNum = ball.over.overNumber;
-                          } else if (typeof ball.overNumber === 'number') {
+                          if (typeof ball.overNumber === 'number') {
                             overNum = ball.overNumber;
+                            if (overNum > currentOverNum) {
+                              currentOverNum = overNum;
+                              legalBallsInOver = 1;
+                            } else {
+                              legalBallsInOver++;
+                            }
                           } else {
-                            overNum = Math.floor(idx / 6);
+                            if (legalBallsInOver >= 6) {
+                              currentOverNum++;
+                              legalBallsInOver = 1;
+                            } else {
+                              legalBallsInOver++;
+                            }
+                            overNum = currentOverNum;
                           }
                           
                           if (!ballsByOver[overNum]) ballsByOver[overNum] = [];
-                          ballsByOver[overNum].push({ ...ball, isExtra: false, isWicket: false });
+                          ballsByOver[overNum].push({ 
+                            ...ball, 
+                            isExtra: false, 
+                            isWicket: false,
+                            timestamp: ball.createdAt || new Date().toISOString()
+                          });
                         });
 
-                        // Add extras to their corresponding overs
+                        // Add extras in chronological order within their overs
                         (match.innings[selectedInnings].extras || []).forEach((extra: any) => {
                           let overNum = 0;
                           if (extra.overId && match.innings[selectedInnings].overs) {
@@ -700,10 +1061,15 @@ export default function MatchDetailPage() {
                             if (over) overNum = over.overNumber;
                           }
                           if (!ballsByOver[overNum]) ballsByOver[overNum] = [];
-                          ballsByOver[overNum].push({ ...extra, isExtra: true, isWicket: false });
+                          ballsByOver[overNum].push({ 
+                            ...extra, 
+                            isExtra: true, 
+                            isWicket: false,
+                            timestamp: extra.createdAt || new Date().toISOString()
+                          });
                         });
 
-                        // Add wickets to their corresponding overs (by finding the ball they're associated with)
+                        // Add wickets by merging with their associated balls
                         (match.innings[selectedInnings].wickets || []).forEach((wicket: any) => {
                           const ball = match.innings[selectedInnings].balls.find((b: any) => b.id === wicket.ballId);
                           if (ball) {
@@ -713,9 +1079,38 @@ export default function MatchDetailPage() {
                             } else {
                               overNum = Math.floor(match.innings[selectedInnings].balls.indexOf(ball) / 6);
                             }
-                            if (!ballsByOver[overNum]) ballsByOver[overNum] = [];
-                            ballsByOver[overNum].push({ ...wicket, isWicket: true, isExtra: false });
+                            
+                            // Find and merge wicket with the ball in ballsByOver
+                            const ballIndex = ballsByOver[overNum]?.findIndex((d: any) => d.id === wicket.ballId);
+                            if (ballIndex !== undefined && ballIndex >= 0 && ballsByOver[overNum]) {
+                              // Merge wicket info into the ball
+                              ballsByOver[overNum][ballIndex] = {
+                                ...ballsByOver[overNum][ballIndex],
+                                ...wicket,
+                                isWicket: true,
+                                isExtra: false,
+                                timestamp: wicket.createdAt || ballsByOver[overNum][ballIndex].timestamp
+                              };
+                            } else if (!ballsByOver[overNum]) {
+                              ballsByOver[overNum] = [];
+                              ballsByOver[overNum].push({ 
+                                ...wicket, 
+                                isWicket: true, 
+                                isExtra: false,
+                                timestamp: wicket.createdAt || new Date().toISOString()
+                              });
+                            }
                           }
+                        });
+
+                        // Sort deliveries within each over by timestamp to maintain chronological order
+                        Object.keys(ballsByOver).forEach((overNumStr: string) => {
+                          const overNum = parseInt(overNumStr);
+                          ballsByOver[overNum].sort((a: any, b: any) => {
+                            const timeA = new Date(a.timestamp).getTime();
+                            const timeB = new Date(b.timestamp).getTime();
+                            return timeA - timeB;
+                          });
                         });
 
                         // Sort overs and render
@@ -732,6 +1127,7 @@ export default function MatchDetailPage() {
                                   let tooltip = `Ball ${delivery.ballNumber || didx + 1}: ${delivery.runs || 0} runs`;
                                   
                                   if (delivery.isWicket) {
+                                    // Show wicket marker only; do not append runs
                                     displayValue = 'w';
                                     bgColor = "bg-red-700";
                                     tooltip = `Wicket - ${delivery.wicketType}`;
@@ -788,6 +1184,10 @@ export default function MatchDetailPage() {
                           ));
                       })()}
                     </div>
+                  </div>
+                ) : (
+                  <div className="bg-slate-900 rounded-lg p-4 mb-4 border border-slate-700 text-center">
+                    <p className="text-gray-400 text-xs">No balls recorded yet</p>
                   </div>
                 )}
               </>

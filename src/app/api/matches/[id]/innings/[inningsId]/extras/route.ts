@@ -2,6 +2,7 @@ import {
   getInningsCollection,
   getOversCollection,
   getExtrasCollection,
+  getMatchesCollection,
 } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
@@ -26,6 +27,40 @@ export async function POST(
     const inningsCollection = await getInningsCollection();
     const oversCollection = await getOversCollection();
     const extrasCollection = await getExtrasCollection();
+    const matchesCollection = await getMatchesCollection();
+
+    // Fetch match to check oversLimit
+    const match = await matchesCollection.findOne({
+      _id: new ObjectId(id),
+    });
+
+    if (!match) {
+      return NextResponse.json(
+        { error: "Match not found" },
+        { status: 404 }
+      );
+    }
+
+    // Fetch current innings to check total balls
+    const innings = await inningsCollection.findOne({
+      _id: new ObjectId(inningsId),
+    });
+
+    if (!innings) {
+      return NextResponse.json(
+        { error: "Innings not found" },
+        { status: 404 }
+      );
+    }
+
+    // Check if match is at over limit (extras don't count as balls, but check anyway)
+    const maxBalls = match.oversLimit * 6;
+    if (innings.totalBalls >= maxBalls) {
+      return NextResponse.json(
+        { error: `Over limit reached. Maximum ${match.oversLimit} overs allowed.` },
+        { status: 400 }
+      );
+    }
 
     // Create extra record
     const result = await extrasCollection.insertOne({

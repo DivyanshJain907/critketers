@@ -11,11 +11,22 @@ export default function LandingPage() {
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
+    const role = localStorage.getItem('userRole');
+    
     if (token) {
-      setIsLoggedIn(true);
+      // Redirect to appropriate dashboard based on role
+      if (role === 'UMPIRE') {
+        router.push('/dashboard/umpire');
+      } else if (role === 'ADMIN') {
+        router.push('/dashboard/admin');
+      } else {
+        router.push('/dashboard');
+      }
+      return;
     }
+    
     setLoading(false);
-  }, []);
+  }, [router]);
 
   if (loading) {
     return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="text-white text-2xl">Loading...</div></div>;
