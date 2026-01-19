@@ -582,7 +582,7 @@ export default function MatchDetailPage() {
   return (
     <div className="min-h-screen bg-slate-950">
       {/* Premium Dark Header */}
-      <header className="sticky top-0 z-50 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-2xl border-b border-blue-500">
+      <header className="sticky top-0 z-50 bg-linear-to-r from-blue-600 to-blue-700 text-white shadow-2xl border-b border-blue-500">
         <div className="max-w-6xl mx-auto px-6 py-6">
           <Link href="/matches" className="text-blue-100 hover:text-white mb-3 inline-block text-sm font-medium transition">
             ← Back to Matches
@@ -681,21 +681,21 @@ export default function MatchDetailPage() {
             </div>
           </div>
         ) : match.innings.length === 0 ? (
-          <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl shadow-2xl p-8 text-center border border-slate-700">
+          <div className="bg-linear-to-br from-slate-900 to-slate-800 rounded-xl shadow-2xl p-8 text-center border border-slate-700">
             <h2 className="text-3xl font-bold text-white mb-2">🎯 Start Innings</h2>
             <p className="text-gray-400 mb-6 text-sm">Select which team will bat first</p>
             <div className="space-y-3">
               <button
                 onClick={() => startInnings(match.teamA.id)}
                 disabled={isSaving}
-                className="w-full py-4 px-6 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold text-base transition"
+                className="w-full py-4 px-6 bg-linear-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold text-base transition"
               >
                 {isSaving ? '⏳ Starting...' : `▶ ${match.teamA.name} Innings`}
               </button>
               <button
                 onClick={() => startInnings(match.teamB.id)}
                 disabled={isSaving}
-                className="w-full py-4 px-6 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold text-base transition"
+                className="w-full py-4 px-6 bg-linear-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold text-base transition"
               >
                 {isSaving ? '⏳ Starting...' : `▶ ${match.teamB.name} Innings`}
               </button>
@@ -706,7 +706,7 @@ export default function MatchDetailPage() {
             {match.innings[selectedInnings] && (
               <>
                 {/* BROADCAST-STYLE SCOREBOARD */}
-                <div className="bg-gradient-to-r from-red-600 via-slate-900 to-slate-900 text-white rounded-lg shadow-2xl p-4 mb-6 border border-red-600/50 font-mono text-xs">
+                <div className="bg-linear-to-r from-red-600 via-slate-900 to-slate-900 text-white rounded-lg shadow-2xl p-4 mb-6 border border-red-600/50 font-mono text-xs">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     {/* Runs & Balls */}
                     <div className="font-bold text-lg">
@@ -753,7 +753,7 @@ export default function MatchDetailPage() {
                       <button
                         onClick={() => startInnings(fieldingTeam.id)}
                         disabled={isSaving}
-                        className="w-full py-3 px-4 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold text-sm transition"
+                        className="w-full py-3 px-4 bg-linear-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold text-sm transition"
                       >
                         {isSaving ? '⏳ Starting...' : `▶ Start ${fieldingTeam.name} Innings`}
                       </button>
@@ -820,7 +820,7 @@ export default function MatchDetailPage() {
                       <button
                         onClick={handleCompleteBall}
                         disabled={isSaving || isOverLimitReached}
-                        className="w-full bg-gradient-to-br from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-xl p-8 mb-4 text-center shadow-2xl transition transform hover:scale-105 active:scale-95 disabled:opacity-50"
+                        className="w-full bg-linear-to-br from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-xl p-8 mb-4 text-center shadow-2xl transition transform hover:scale-105 active:scale-95 disabled:opacity-50"
                       >
                         <p className="text-xs font-semibold mb-2 opacity-90">TAP TO COMPLETE BALL</p>
                         <h3 className="text-7xl font-bold">{currentRuns}</h3>
@@ -834,7 +834,7 @@ export default function MatchDetailPage() {
                             <button
                               onClick={() => startInnings(match.teamB.id)}
                               disabled={isSaving}
-                              className="w-full py-3 px-4 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold text-base transition"
+                              className="w-full py-3 px-4 bg-linear-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold text-base transition"
                             >
                               {isSaving ? '⏳ Starting...' : `▶ Start ${match.teamB.name} Innings`}
                             </button>

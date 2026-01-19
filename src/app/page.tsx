@@ -47,7 +47,7 @@ export default function LandingPage() {
           <div className="flex items-center space-x-3">
             <div className="text-4xl">🏏</div>
             <div>
-              <h1 className="text-2xl font-black bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">CricKeters</h1>
+              <h1 className="text-2xl font-black bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">CricKeters</h1>
               <p className="text-xs text-slate-400 font-semibold tracking-widest">PROFESSIONAL MATCH RECORDING</p>
             </div>
           </div>
@@ -57,7 +57,7 @@ export default function LandingPage() {
                 <Link href="/login" className="px-6 py-2.5 text-sm font-semibold text-slate-300 hover:text-white transition-colors border border-slate-700 rounded-lg hover:border-slate-500">
                   Login
                 </Link>
-                <Link href="/signup" className="px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50">
+                <Link href="/signup" className="px-6 py-2.5 text-sm font-semibold text-white bg-linear-to-r from-blue-600 to-cyan-600 rounded-lg hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50">
                   Sign Up
                 </Link>
               </>
@@ -84,7 +84,7 @@ export default function LandingPage() {
             <p className="text-sm font-semibold text-blue-300">✨ Enterprise-Grade Cricket Scoring Platform</p>
           </div>
           <h2 className="text-6xl lg:text-7xl font-black mb-6 leading-tight">
-            <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">Professional Cricket</span>
+            <span className="bg-linear-to-r from-blue-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">Professional Cricket</span>
             <br />
             <span className="text-slate-200">Match Recording System</span>
           </h2>
@@ -97,7 +97,7 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
               <Link
                 href="/signup"
-                className="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold rounded-lg hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50 text-lg"
+                className="px-8 py-4 bg-linear-to-r from-blue-600 to-cyan-600 text-white font-bold rounded-lg hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50 text-lg"
               >
                 Start Free Trial
               </Link>
@@ -111,7 +111,7 @@ export default function LandingPage() {
           ) : (
             <Link
               href="/dashboard"
-              className="inline-block px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold rounded-lg hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50 text-lg"
+              className="inline-block px-8 py-4 bg-linear-to-r from-blue-600 to-cyan-600 text-white font-bold rounded-lg hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50 text-lg"
             >
               Access Dashboard
             </Link>
@@ -122,7 +122,7 @@ export default function LandingPage() {
         {/* Features Grid - Premium Style */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">
           <div className="group relative p-8 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-blue-500/50 transition-all hover:bg-slate-900/80 hover:shadow-lg hover:shadow-blue-500/10">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-cyan-600/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="absolute inset-0 bg-linear-to-br from-blue-600/10 to-cyan-600/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="relative z-10">
               <div className="text-4xl mb-4">👥</div>
               <h3 className="text-xl font-bold mb-3 text-slate-100">Team Management</h3>
@@ -134,7 +134,7 @@ export default function LandingPage() {
           </div>
 
           <div className="group relative p-8 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-cyan-500/50 transition-all hover:bg-slate-900/80 hover:shadow-lg hover:shadow-cyan-500/10">
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/10 to-blue-600/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="absolute inset-0 bg-linear-to-br from-cyan-600/10 to-blue-600/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="relative z-10">
               <div className="text-4xl mb-4">⚡</div>
               <h3 className="text-xl font-bold mb-3 text-slate-100">Live Scoring</h3>
@@ -146,7 +146,7 @@ export default function LandingPage() {
           </div>
 
           <div className="group relative p-8 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-blue-500/50 transition-all hover:bg-slate-900/80 hover:shadow-lg hover:shadow-blue-500/10">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-indigo-600/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="absolute inset-0 bg-linear-to-br from-blue-600/10 to-indigo-600/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="relative z-10">
               <div className="text-4xl mb-4">📊</div>
               <h3 className="text-xl font-bold mb-3 text-slate-100">Advanced Analytics</h3>
@@ -161,15 +161,15 @@ export default function LandingPage() {
         {/* Stats Section */}
         <div className="grid grid-cols-3 gap-6 mb-20 py-12 border-y border-slate-800">
           <div className="text-center">
-            <div className="text-4xl font-black text-transparent bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text mb-2">1M+</div>
+            <div className="text-4xl font-black text-transparent bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text mb-2">1M+</div>
             <p className="text-slate-400 text-sm">Deliveries Recorded</p>
           </div>
           <div className="text-center">
-            <div className="text-4xl font-black text-transparent bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text mb-2">10K+</div>
+            <div className="text-4xl font-black text-transparent bg-linear-to-r from-cyan-400 to-blue-400 bg-clip-text mb-2">10K+</div>
             <p className="text-slate-400 text-sm">Active Users</p>
           </div>
           <div className="text-center">
-            <div className="text-4xl font-black text-transparent bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text mb-2">99.9%</div>
+            <div className="text-4xl font-black text-transparent bg-linear-to-r from-blue-400 to-indigo-400 bg-clip-text mb-2">99.9%</div>
             <p className="text-slate-400 text-sm">Uptime SLA</p>
           </div>
         </div>
@@ -182,7 +182,7 @@ export default function LandingPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Umpire Card */}
-            <div className="relative overflow-hidden rounded-xl border border-slate-800 bg-gradient-to-br from-slate-900/80 to-slate-800/50 p-8 group hover:border-blue-500/50 transition-all">
+            <div className="relative overflow-hidden rounded-xl border border-slate-800 bg-linear-to-br from-slate-900/80 to-slate-800/50 p-8 group hover:border-blue-500/50 transition-all">
               <div className="absolute top-0 left-0 w-40 h-40 bg-blue-600/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 group-hover:scale-150 transition-transform"></div>
               <div className="relative z-10">
                 <div className="text-5xl mb-4">👨‍⚖️</div>
@@ -212,9 +212,9 @@ export default function LandingPage() {
             </div>
 
             {/* Admin Card */}
-            <div className="relative overflow-hidden rounded-xl border border-slate-800 bg-gradient-to-br from-slate-900/80 to-slate-800/50 p-8 group hover:border-cyan-500/50 transition-all ring-1 ring-slate-700">
+            <div className="relative overflow-hidden rounded-xl border border-slate-800 bg-linear-to-br from-slate-900/80 to-slate-800/50 p-8 group hover:border-cyan-500/50 transition-all ring-1 ring-slate-700">
               <div className="absolute top-0 left-0 w-40 h-40 bg-cyan-600/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 group-hover:scale-150 transition-transform"></div>
-              <div className="absolute top-4 right-4 px-3 py-1 bg-gradient-to-r from-yellow-600 to-orange-600 rounded-full text-xs font-bold">
+              <div className="absolute top-4 right-4 px-3 py-1 bg-linear-to-r from-yellow-600 to-orange-600 rounded-full text-xs font-bold">
                 ENTERPRISE
               </div>
               <div className="relative z-10">
@@ -245,7 +245,7 @@ export default function LandingPage() {
             </div>
 
             {/* Viewer Card */}
-            <div className="relative overflow-hidden rounded-xl border border-slate-800 bg-gradient-to-br from-slate-900/80 to-slate-800/50 p-8 group hover:border-green-500/50 transition-all">
+            <div className="relative overflow-hidden rounded-xl border border-slate-800 bg-linear-to-br from-slate-900/80 to-slate-800/50 p-8 group hover:border-green-500/50 transition-all">
               <div className="absolute top-0 left-0 w-40 h-40 bg-green-600/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 group-hover:scale-150 transition-transform"></div>
               <div className="relative z-10">
                 <div className="text-5xl mb-4">👁️</div>
@@ -280,15 +280,15 @@ export default function LandingPage() {
         </div>
 
         {/* CTA Section */}
-        <div className="relative rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900/80 to-slate-800/50 p-12 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 opacity-50"></div>
+        <div className="relative rounded-2xl border border-slate-800 bg-linear-to-br from-slate-900/80 to-slate-800/50 p-12 overflow-hidden">
+          <div className="absolute inset-0 bg-linear-to-r from-blue-600/20 to-cyan-600/20 opacity-50"></div>
           <div className="relative z-10 text-center">
             <h3 className="text-4xl font-bold mb-4">Ready to Transform Your Cricket Scoring?</h3>
             <p className="text-slate-400 text-lg mb-8 max-w-2xl mx-auto">Join thousands of umpires and administrators who trust CricKeters for professional match recording</p>
             {!isLoggedIn && (
               <Link
                 href="/signup"
-                className="inline-block px-10 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold rounded-lg hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50 text-lg"
+                className="inline-block px-10 py-4 bg-linear-to-r from-blue-600 to-cyan-600 text-white font-bold rounded-lg hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50 text-lg"
               >
                 Start Your Free Trial Today
               </Link>

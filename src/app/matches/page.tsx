@@ -107,10 +107,10 @@ export default function MatchesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800">
       {/* Public Access Banner */}
       {!isLoggedIn && (
-        <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 px-4 text-center">
+        <div className="bg-linear-to-r from-green-600 to-blue-600 text-white py-3 px-4 text-center">
           <p className="text-sm md:text-base font-semibold">
             👁️ Watching as a guest • No login required to view matches
           </p>

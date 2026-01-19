@@ -78,7 +78,7 @@ export default function SignupPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold mb-2">🏏</h1>
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2">CricKeters</h2>
+          <h2 className="text-3xl font-bold bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2">CricKeters</h2>
           <p className="text-slate-400">Create Your Professional Account</p>
         </div>
 
@@ -219,7 +219,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-3 rounded-lg font-bold hover:from-blue-700 hover:to-cyan-700 transition disabled:opacity-50 mt-6"
+              className="w-full bg-linear-to-r from-blue-600 to-cyan-600 text-white py-3 rounded-lg font-bold hover:from-blue-700 hover:to-cyan-700 transition disabled:opacity-50 mt-6"
             >
               {loading ? 'Creating Account...' : 'Create Account'}
             </button>
