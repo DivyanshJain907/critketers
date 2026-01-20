@@ -36,7 +36,10 @@ export default function TeamDetailPage() {
 
   const fetchTeam = async () => {
     try {
-      const response = await fetch(`/api/teams/${teamId}`);
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`/api/teams/${teamId}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
       const data = await response.json();
       setTeam(data);
     } catch (error) {
@@ -52,9 +55,13 @@ export default function TeamDetailPage() {
 
     setIsAddingPlayer(true);
     try {
+      const token = localStorage.getItem('authToken');
       const response = await fetch(`/api/teams/${teamId}/players`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({
           name: newPlayerName,
           jerseyNo: newPlayerJerseyNo ? parseInt(newPlayerJerseyNo) : null,
@@ -90,8 +97,10 @@ export default function TeamDetailPage() {
     if (!confirm('Are you sure you want to delete this player?')) return;
 
     try {
+      const token = localStorage.getItem('authToken');
       const response = await fetch(`/api/teams/${teamId}/players/${playerId}`, {
         method: 'DELETE',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
       });
 
       if (response.ok) {

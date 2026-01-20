@@ -47,7 +47,10 @@ export default function MatchesPage() {
 
   const fetchMatches = async () => {
     try {
-      const response = await fetch('/api/matches');
+      const token = localStorage.getItem('authToken');
+      const response = await fetch('/api/matches', {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
       const data = await response.json();
       setMatches(data);
     } catch (error) {
@@ -57,7 +60,10 @@ export default function MatchesPage() {
 
   const fetchTeams = async () => {
     try {
-      const response = await fetch('/api/teams');
+      const token = localStorage.getItem('authToken');
+      const response = await fetch('/api/teams', {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
       const data = await response.json();
       setTeams(data);
     } catch (error) {
@@ -70,9 +76,13 @@ export default function MatchesPage() {
     if (!formData.teamAId || !formData.teamBId || formData.teamAId === formData.teamBId) return;
 
     try {
+      const token = localStorage.getItem('authToken');
       const response = await fetch('/api/matches', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({
           name: formData.name || undefined,
           teamAId: formData.teamAId,

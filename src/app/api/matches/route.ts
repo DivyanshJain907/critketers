@@ -1,16 +1,43 @@
 import { getMatchesCollection, getTeamsCollection, getInningsCollection } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 // GET /api/matches - Get all matches
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const matchesCollection = await getMatchesCollection();
     const teamsCollection = await getTeamsCollection();
     const inningsCollection = await getInningsCollection();
 
+    // Get user role and ID from request headers
+    let userRole = 'VIEWER';
+    let userId = null;
+
+    const authHeader = request.headers.get('authorization');
+    if (authHeader) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+        userRole = decoded.role;
+        userId = decoded.userId;
+      } catch (error) {
+        // Token invalid or expired, continue as VIEWER
+      }
+    }
+
+    // Build query filter
+    let query: any = {};
+    if (userRole === 'UMPIRE' && userId) {
+      // Umpires can only see their own matches
+      query.umpireId = userId;
+    }
+    // ADMINs see all matches (no filter)
+
     const matches = await matchesCollection
-      .find({})
+      .find(query)
       .sort({ createdAt: -1 })
       .toArray();
 
@@ -54,6 +81,30 @@ export async function GET() {
 // POST /api/matches - Create a new match
 export async function POST(request: NextRequest) {
   try {
+    // Get umpire ID from auth token
+    const authHeader = request.headers.get('authorization');
+    let umpireId = null;
+
+    if (authHeader) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+        if (decoded.role === 'UMPIRE' || decoded.role === 'ADMIN') {
+          umpireId = decoded.userId;
+        }
+      } catch (error) {
+        return NextResponse.json(
+          { error: 'Invalid or expired token' },
+          { status: 401 }
+        );
+      }
+    } else {
+      return NextResponse.json(
+        { error: 'Authorization required' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const {
       name,
@@ -101,6 +152,7 @@ export async function POST(request: NextRequest) {
       name: name || `${teamA.name} vs ${teamB.name}`,
       teamAId,
       teamBId,
+      umpireId, // Store the umpire who created this match
       tossWinnerId: tossWinnerId || null,
       tossDecision: tossDecision || null,
       oversLimit: oversLimit || 20,
@@ -114,6 +166,7 @@ export async function POST(request: NextRequest) {
       name: name || `${teamA.name} vs ${teamB.name}`,
       teamAId,
       teamBId,
+      umpireId,
       tossWinnerId: tossWinnerId || null,
       tossDecision: tossDecision || null,
       oversLimit: oversLimit || 20,

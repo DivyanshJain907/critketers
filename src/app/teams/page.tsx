@@ -23,7 +23,10 @@ export default function TeamsPage() {
 
   const fetchTeams = async () => {
     try {
-      const response = await fetch('/api/teams');
+      const token = localStorage.getItem('authToken');
+      const response = await fetch('/api/teams', {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
       const data = await response.json();
       setTeams(data);
     } catch (error) {
@@ -38,9 +41,13 @@ export default function TeamsPage() {
     if (!newTeamName.trim()) return;
 
     try {
+      const token = localStorage.getItem('authToken');
       const response = await fetch('/api/teams', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({
           name: newTeamName,
           shortCode: newTeamCode || undefined,

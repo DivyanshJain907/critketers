@@ -10,6 +10,9 @@ import {
 } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 // GET /api/matches/[id] - Get match by ID
 export async function GET(
@@ -38,6 +41,30 @@ export async function GET(
 
     if (!match) {
       return NextResponse.json({ error: "Match not found" }, { status: 404 });
+    }
+
+    // Check access control for umpires
+    let userRole = 'VIEWER';
+    let userId = null;
+
+    const authHeader = request.headers.get('authorization');
+    if (authHeader) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+        userRole = decoded.role;
+        userId = decoded.userId;
+      } catch (error) {
+        // Token invalid, continue as VIEWER
+      }
+    }
+
+    // Check if umpire is accessing their own match
+    if (userRole === 'UMPIRE' && match.umpireId !== userId) {
+      return NextResponse.json(
+        { error: "You do not have access to this match" },
+        { status: 403 }
+      );
     }
 
     // Get teams with players
@@ -154,6 +181,39 @@ export async function PATCH(
     const matchesCollection = await getMatchesCollection();
     const teamsCollection = await getTeamsCollection();
 
+    // Verify match exists
+    const match = await matchesCollection.findOne({
+      _id: new ObjectId(id),
+    });
+
+    if (!match) {
+      return NextResponse.json({ error: "Match not found" }, { status: 404 });
+    }
+
+    // Check access control for umpires
+    let userRole = 'VIEWER';
+    let userId = null;
+
+    const authHeader = request.headers.get('authorization');
+    if (authHeader) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+        userRole = decoded.role;
+        userId = decoded.userId;
+      } catch (error) {
+        // Token invalid, continue as VIEWER
+      }
+    }
+
+    // Check if umpire is accessing their own match
+    if (userRole === 'UMPIRE' && match.umpireId !== userId) {
+      return NextResponse.json(
+        { error: "You do not have access to this match" },
+        { status: 403 }
+      );
+    }
+
     const result = await matchesCollection.updateOne(
       { _id: new ObjectId(id) },
       {
@@ -168,20 +228,20 @@ export async function PATCH(
       return NextResponse.json({ error: "Match not found" }, { status: 404 });
     }
 
-    const match = await matchesCollection.findOne({
+    const updatedMatch = await matchesCollection.findOne({
       _id: new ObjectId(id),
     });
 
     const teamA = await teamsCollection.findOne({
-      _id: new ObjectId(match?.teamAId),
+      _id: new ObjectId(updatedMatch?.teamAId),
     });
     const teamB = await teamsCollection.findOne({
-      _id: new ObjectId(match?.teamBId),
+      _id: new ObjectId(updatedMatch?.teamBId),
     });
 
     return NextResponse.json({
-      ...match,
-      id: match?._id?.toString(),
+      ...updatedMatch,
+      id: updatedMatch?._id?.toString(),
       teamA: teamA ? { ...teamA, id: teamA._id?.toString() } : null,
       teamB: teamB ? { ...teamB, id: teamB._id?.toString() } : null,
     });

@@ -7,6 +7,9 @@ import {
 } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 // POST /api/matches/[id]/innings/[inningsId]/balls - Record a new ball
 export async function POST(
@@ -61,6 +64,30 @@ export async function POST(
       return NextResponse.json(
         { error: "Match not found" },
         { status: 404 }
+      );
+    }
+
+    // Check access control for umpires
+    let userRole = 'VIEWER';
+    let userId = null;
+
+    const authHeader = request.headers.get('authorization');
+    if (authHeader) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+        userRole = decoded.role;
+        userId = decoded.userId;
+      } catch (error) {
+        // Token invalid, continue as VIEWER
+      }
+    }
+
+    // Check if umpire is accessing their own match
+    if (userRole === 'UMPIRE' && match.umpireId !== userId) {
+      return NextResponse.json(
+        { error: "You do not have access to this match" },
+        { status: 403 }
       );
     }
 

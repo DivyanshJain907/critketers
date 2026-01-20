@@ -56,7 +56,10 @@ export default function LiveScorePage() {
 
   const fetchMatch = async () => {
     try {
-      const response = await fetch(`/api/matches/${matchId}`);
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`/api/matches/${matchId}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
       if (!response.ok) throw new Error('Match not found');
       const data = await response.json();
       setMatch(data);

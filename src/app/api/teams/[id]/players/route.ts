@@ -7,6 +7,9 @@ import {
 } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 // GET /api/teams/[id]/players - Get players of a team
 export async function GET(
@@ -15,7 +18,41 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const teamsCollection = await getTeamsCollection();
     const playersCollection = await getPlayersCollection();
+
+    // Verify team exists and check ownership
+    const team = await teamsCollection.findOne({
+      _id: new ObjectId(id),
+    });
+    if (!team) {
+      return NextResponse.json({ error: "Team not found" }, { status: 404 });
+    }
+
+    // Check access control for umpires
+    let userRole = 'VIEWER';
+    let userId = null;
+
+    const authHeader = request.headers.get('authorization');
+    if (authHeader) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+        userRole = decoded.role;
+        userId = decoded.userId;
+      } catch (error) {
+        // Token invalid, continue as VIEWER
+      }
+    }
+
+    // Check if umpire is accessing their own team
+    if (userRole === 'UMPIRE' && team.umpireId !== userId) {
+      return NextResponse.json(
+        { error: "You do not have access to this team" },
+        { status: 403 }
+      );
+    }
+
     const players = await playersCollection
       .find({ teamId: id })
       .toArray();
@@ -61,6 +98,30 @@ export async function POST(
     });
     if (!team) {
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
+    }
+
+    // Check access control for umpires
+    let userRole = 'VIEWER';
+    let userId = null;
+
+    const authHeader = request.headers.get('authorization');
+    if (authHeader) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+        userRole = decoded.role;
+        userId = decoded.userId;
+      } catch (error) {
+        // Token invalid, continue as VIEWER
+      }
+    }
+
+    // Check if umpire is adding to their own team
+    if (userRole === 'UMPIRE' && team.umpireId !== userId) {
+      return NextResponse.json(
+        { error: "You do not have access to add players to this team" },
+        { status: 403 }
+      );
     }
 
     // Check for duplicate jersey number only if provided

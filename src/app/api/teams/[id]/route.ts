@@ -1,6 +1,9 @@
 import { getTeamsCollection, getPlayersCollection } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 // GET /api/teams/[id] - Get team by ID
 export async function GET(
@@ -18,6 +21,30 @@ export async function GET(
 
     if (!team) {
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
+    }
+
+    // Check access control for umpires
+    let userRole = 'VIEWER';
+    let userId = null;
+
+    const authHeader = request.headers.get('authorization');
+    if (authHeader) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+        userRole = decoded.role;
+        userId = decoded.userId;
+      } catch (error) {
+        // Token invalid, continue as VIEWER
+      }
+    }
+
+    // Check if umpire is accessing their own team
+    if (userRole === 'UMPIRE' && team.umpireId !== userId) {
+      return NextResponse.json(
+        { error: "You do not have access to this team" },
+        { status: 403 }
+      );
     }
 
     const players = await playersCollection
@@ -51,6 +78,38 @@ export async function DELETE(
   try {
     const { id } = await params;
     const teamsCollection = await getTeamsCollection();
+
+    const team = await teamsCollection.findOne({
+      _id: new ObjectId(id),
+    });
+
+    if (!team) {
+      return NextResponse.json({ error: "Team not found" }, { status: 404 });
+    }
+
+    // Check access control for umpires
+    let userRole = 'VIEWER';
+    let userId = null;
+
+    const authHeader = request.headers.get('authorization');
+    if (authHeader) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+        userRole = decoded.role;
+        userId = decoded.userId;
+      } catch (error) {
+        // Token invalid, continue as VIEWER
+      }
+    }
+
+    // Check if umpire is deleting their own team
+    if (userRole === 'UMPIRE' && team.umpireId !== userId) {
+      return NextResponse.json(
+        { error: "You do not have access to delete this team" },
+        { status: 403 }
+      );
+    }
 
     const result = await teamsCollection.deleteOne({
       _id: new ObjectId(id),

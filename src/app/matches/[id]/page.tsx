@@ -121,8 +121,19 @@ export default function MatchDetailPage() {
   const fetchMatch = async () => {
     try {
       setError('');
-      const response = await fetch(`/api/matches/${matchId}`);
-      if (!response.ok) throw new Error('Match not found');
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`/api/matches/${matchId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+      if (!response.ok) {
+        if (response.status === 403) {
+          setError('You do not have access to this match');
+          return;
+        }
+        throw new Error('Match not found');
+      }
       const data = await response.json();
       setMatch(data);
     } catch (err) {
@@ -141,9 +152,13 @@ export default function MatchDetailPage() {
 
     try {
       setIsSaving(true);
+      const token = localStorage.getItem('authToken');
       const response = await fetch(`/api/matches/${matchId}/innings`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           teamId,
           inningsNumber,
@@ -490,7 +505,10 @@ export default function MatchDetailPage() {
   const checkAndStartNextInningsIfAllOut = async () => {
     // Fetch the latest match data to check current state
     try {
-      const response = await fetch(`/api/matches/${matchId}`);
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`/api/matches/${matchId}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
       const updatedMatch = await response.json();
       
       if (!updatedMatch || !updatedMatch.innings[selectedInnings]) return;
@@ -523,7 +541,10 @@ export default function MatchDetailPage() {
         // Start the innings
         const inningsResponse = await fetch(`/api/matches/${matchId}/innings`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({
             teamId: fieldingTeam.id,
             inningsNumber: 2,
@@ -536,7 +557,9 @@ export default function MatchDetailPage() {
           console.log('Successfully started innings for', fieldingTeam.name);
           
           // Refetch match data after starting innings
-          const freshResponse = await fetch(`/api/matches/${matchId}`);
+          const freshResponse = await fetch(`/api/matches/${matchId}`, {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+          });
           const freshMatch = await freshResponse.json();
           
           // Update match state and switch to the new innings
@@ -568,9 +591,13 @@ export default function MatchDetailPage() {
 
     const markComplete = async () => {
       try {
+        const token = localStorage.getItem('authToken');
         const res = await fetch(`/api/matches/${matchId}`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({ status: 'COMPLETED' }),
         });
 

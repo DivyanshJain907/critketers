@@ -73,7 +73,10 @@ export default function MatchDetailPage() {
   const fetchMatch = async () => {
     try {
       setError('');
-      const response = await fetch(`/api/matches/${matchId}`);
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`/api/matches/${matchId}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
       if (!response.ok) throw new Error('Match not found');
       const data = await response.json();
       setMatch(data);
@@ -93,9 +96,13 @@ export default function MatchDetailPage() {
 
     try {
       setIsSaving(true);
+      const token = localStorage.getItem('authToken');
       const response = await fetch(`/api/matches/${matchId}/innings`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           teamId,
           inningsNumber,
