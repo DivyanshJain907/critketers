@@ -88,8 +88,8 @@ export default function LiveScorePage() {
 
   const firstInnings = match.innings?.[0];
   const secondInnings = match.innings?.[1];
-  const batingTeam = firstInnings?.teamId === match.teamA._id ? match.teamA : match.teamB;
-  const bowlingTeam = firstInnings?.teamId === match.teamA._id ? match.teamB : match.teamA;
+  const batingTeam = firstInnings?.teamId === match.teamA.id ? match.teamA : match.teamB;
+  const bowlingTeam = firstInnings?.teamId === match.teamA.id ? match.teamB : match.teamA;
 
   return (
     <div className="min-h-screen bg-slate-950 text-white overflow-hidden">
@@ -106,7 +106,7 @@ export default function LiveScorePage() {
       </div>
 
       {/* Header */}
-      <header className="relative z-10 border-b border-slate-800 backdrop-blur-md bg-slate-950/50 sticky top-0">
+      <header className="z-10 border-b border-slate-800 backdrop-blur-md bg-slate-950/50 sticky top-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center mb-3">
             <Link href="/" className="text-blue-400 hover:text-blue-300 text-sm font-medium">
@@ -138,7 +138,7 @@ export default function LiveScorePage() {
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              {inning.inningsNumber}. {inning.teamId === match.teamA._id ? match.teamA.name : match.teamB.name}
+              {inning.inningsNumber}. {inning.teamId === match.teamA.id ? match.teamA.name : match.teamB.name}
             </button>
           ))}
         </div>
@@ -152,7 +152,7 @@ export default function LiveScorePage() {
               <div className="bg-linear-to-br from-blue-900/40 to-blue-800/30 rounded-xl border border-blue-500/50 p-6">
                 <p className="text-xs text-blue-400 font-semibold mb-2 uppercase">🏏 Batting Team</p>
                 <p className="text-3xl font-black text-white mb-1">
-                  {match.innings[selectedInnings].teamId === match.teamA._id ? match.teamA.name : match.teamB.name}
+                  {match.innings[selectedInnings].teamId === match.teamA.id ? match.teamA.name : match.teamB.name}
                 </p>
                 <p className="text-sm text-blue-300">
                   {match.innings[selectedInnings].totalRuns}/{match.innings[selectedInnings].totalWickets} ({Math.floor(match.innings[selectedInnings].totalBalls / 6)}.{match.innings[selectedInnings].totalBalls % 6})
@@ -163,7 +163,7 @@ export default function LiveScorePage() {
               <div className="bg-linear-to-br from-green-900/40 to-green-800/30 rounded-xl border border-green-500/50 p-6">
                 <p className="text-xs text-green-400 font-semibold mb-2 uppercase">🎯 Bowling Team</p>
                 <p className="text-3xl font-black text-white mb-1">
-                  {match.innings[selectedInnings].teamId === match.teamA._id ? match.teamB.name : match.teamA.name}
+                  {match.innings[selectedInnings].teamId === match.teamA.id ? match.teamB.name : match.teamA.name}
                 </p>
                 <p className="text-sm text-green-300">
                   Limit: {match.oversLimit} overs
@@ -178,7 +178,7 @@ export default function LiveScorePage() {
                 <p className="text-xs text-cyan-400 font-semibold mb-3 uppercase">🏏 Striker (Batter)</p>
                 <p className="text-2xl font-bold text-white">
                   {match.innings[selectedInnings].openingBatsmanId
-                    ? match.innings[selectedInnings].teamId === match.teamA._id
+                    ? match.innings[selectedInnings].teamId === match.teamA.id
                       ? match.teamA.players?.find(p => p.id === match.innings[selectedInnings].openingBatsmanId)?.name || 'Player'
                       : match.teamB.players?.find(p => p.id === match.innings[selectedInnings].openingBatsmanId)?.name || 'Player'
                     : 'TBD'
@@ -191,7 +191,7 @@ export default function LiveScorePage() {
                 <p className="text-xs text-red-400 font-semibold mb-3 uppercase">🎯 Bowler</p>
                 <p className="text-2xl font-bold text-white">
                   {match.innings[selectedInnings].openingBowlerId
-                    ? match.innings[selectedInnings].teamId === match.teamA._id
+                    ? match.innings[selectedInnings].teamId === match.teamA.id
                       ? match.teamB.players?.find(p => p.id === match.innings[selectedInnings].openingBowlerId)?.name || 'Player'
                       : match.teamA.players?.find(p => p.id === match.innings[selectedInnings].openingBowlerId)?.name || 'Player'
                     : 'TBD'
@@ -233,7 +233,7 @@ export default function LiveScorePage() {
                 <div className="bg-slate-700/50 rounded-lg p-4">
                   <p className="text-xs text-slate-400 mb-2">BATTING</p>
                   <p className="text-xl font-bold text-white">
-                    {match.innings[selectedInnings].teamId === match.teamA._id ? match.teamA.name : match.teamB.name}
+                    {match.innings[selectedInnings].teamId === match.teamA.id ? match.teamA.name : match.teamB.name}
                   </p>
                   <p className="text-xs text-slate-400 mt-2">
                     {match.innings[selectedInnings].totalRuns}/{match.innings[selectedInnings].totalWickets} ({Math.floor(match.innings[selectedInnings].totalBalls / 6)}.{match.innings[selectedInnings].totalBalls % 6})
@@ -243,7 +243,7 @@ export default function LiveScorePage() {
                 <div className="bg-slate-700/50 rounded-lg p-4">
                   <p className="text-xs text-slate-400 mb-2">BOWLING</p>
                   <p className="text-xl font-bold text-white">
-                    {match.innings[selectedInnings].teamId === match.teamA._id ? match.teamB.name : match.teamA.name}
+                    {match.innings[selectedInnings].teamId === match.teamA.id ? match.teamB.name : match.teamA.name}
                   </p>
                   <p className="text-xs text-slate-400 mt-2">
                     Limit: {match.oversLimit} overs

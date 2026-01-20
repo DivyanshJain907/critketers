@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-type UserRole = 'UMPIRE' | 'ADMIN' | 'VIEWER';
+type UserRole = 'UMPIRE' | 'ADMIN';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -12,7 +12,7 @@ export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [registrationKey, setRegistrationKey] = useState('');
-  const [role, setRole] = useState<UserRole>('VIEWER');
+  const [role, setRole] = useState<UserRole>('UMPIRE');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showKeyInfo, setShowKeyInfo] = useState(false);
@@ -48,8 +48,6 @@ export default function SignupPage() {
         router.push('/dashboard/umpire');
       } else if (data.role === 'ADMIN') {
         router.push('/dashboard/admin');
-      } else if (data.role === 'VIEWER') {
-        router.push('/dashboard/viewer');
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
@@ -61,9 +59,6 @@ export default function SignupPage() {
 
   const handleRoleChange = (newRole: UserRole) => {
     setRole(newRole);
-    if (newRole === 'VIEWER') {
-      setRegistrationKey('');
-    }
   };
 
   return (
@@ -162,22 +157,6 @@ export default function SignupPage() {
             <div>
               <label className="block text-sm font-semibold text-slate-300 mb-3">Select Your Role</label>
               <div className="space-y-2">
-                <label className="flex items-center p-3 border-2 rounded-lg cursor-pointer transition" style={{ borderColor: role === 'VIEWER' ? '#06B6D4' : '#334155', backgroundColor: role === 'VIEWER' ? 'rgba(6, 182, 212, 0.05)' : 'transparent' }}>
-                  <input
-                    type="radio"
-                    value="VIEWER"
-                    checked={role === 'VIEWER'}
-                    onChange={(e) => handleRoleChange(e.target.value as UserRole)}
-                    className="w-4 h-4 text-cyan-600"
-                  />
-                  <div className="ml-3">
-                    <span className="font-medium text-slate-100">
-                      👁️ Viewer - Watch matches and stats
-                    </span>
-                    <p className="text-xs text-slate-400 mt-1">No registration key required</p>
-                  </div>
-                </label>
-
                 <label className="flex items-center p-3 border-2 rounded-lg cursor-pointer transition" style={{ borderColor: role === 'UMPIRE' ? '#06B6D4' : '#334155', backgroundColor: role === 'UMPIRE' ? 'rgba(6, 182, 212, 0.05)' : 'transparent' }}>
                   <input
                     type="radio"
@@ -212,34 +191,32 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* Registration Key - Only for Umpire and Admin */}
-            {role !== 'VIEWER' && (
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-semibold text-slate-300">Registration Key</label>
-                  <button
-                    type="button"
-                    onClick={() => setShowKeyInfo(!showKeyInfo)}
-                    className="text-xs text-cyan-400 hover:text-cyan-300 transition"
-                  >
-                    {showKeyInfo ? 'Hide' : 'Need a key?'}
-                  </button>
-                </div>
-                {showKeyInfo && (
-                  <div className="bg-cyan-900/20 border border-cyan-500/30 text-cyan-300 px-3 py-2 rounded-lg mb-3 text-xs">
-                    <p>🔐 Your registration key is confidential and provided by administrators. It grants access to privileged roles.</p>
-                  </div>
-                )}
-                <input
-                  type="password"
-                  value={registrationKey}
-                  onChange={(e) => setRegistrationKey(e.target.value)}
-                  required={true}
-                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-white placeholder-slate-500 transition"
-                  placeholder="Enter your registration key..."
-                />
+            {/* Registration Key - Required for all roles */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-semibold text-slate-300">Registration Key</label>
+                <button
+                  type="button"
+                  onClick={() => setShowKeyInfo(!showKeyInfo)}
+                  className="text-xs text-cyan-400 hover:text-cyan-300 transition"
+                >
+                  {showKeyInfo ? 'Hide' : 'Need a key?'}
+                </button>
               </div>
-            )}
+              {showKeyInfo && (
+                <div className="bg-cyan-900/20 border border-cyan-500/30 text-cyan-300 px-3 py-2 rounded-lg mb-3 text-xs">
+                  <p>🔐 Your registration key is confidential and provided by administrators. It grants access to privileged roles.</p>
+                </div>
+              )}
+              <input
+                type="password"
+                value={registrationKey}
+                onChange={(e) => setRegistrationKey(e.target.value)}
+                required={true}
+                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-white placeholder-slate-500 transition"
+                placeholder="Enter your registration key..."
+              />
+            </div>
 
             {/* Submit Button */}
             <button
@@ -267,12 +244,7 @@ export default function SignupPage() {
               ← Back to Home
             </Link>
           </div>
-        </div>
-
-        {/* Footer Info */}
-        <p className="text-center text-slate-500 text-xs mt-8">
-          Create an account to get started with CricKeters
-        </p>
+          </div>
         </div>
       </main>
     </div>

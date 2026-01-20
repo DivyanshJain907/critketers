@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUsersCollection } from '@/lib/mongodb';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import { ObjectId } from 'mongodb';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -19,13 +20,20 @@ export async function POST(request: NextRequest) {
 
     const usersCollection = await getUsersCollection();
 
-    // Find user in database
-    const user = await usersCollection.findOne({
-      email,
-      password,
-    });
+    // Find user by email only
+    const user = await usersCollection.findOne({ email });
 
     if (!user) {
+      return NextResponse.json(
+        { error: 'Invalid email or password' },
+        { status: 401 }
+      );
+    }
+
+    // Compare passwords
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+    if (!passwordMatch) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }

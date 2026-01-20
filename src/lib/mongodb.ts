@@ -91,3 +91,7 @@ export async function getPlayingXICollection() {
 export async function getAuditLogCollection() {
   return getCollection("AuditLog");
 }
+
+export async function getMaintenanceCollection() {
+  return getCollection("Maintenance");
+}

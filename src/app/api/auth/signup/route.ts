@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import { getUsersCollection } from '@/lib/mongodb';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
         );
       }
     }
-    // VIEWER role doesn't require a registration key
+    // All roles require a registration key
 
     const usersCollection = await getUsersCollection();
 
@@ -47,11 +48,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     // Create new user in MongoDB
     const result = await usersCollection.insertOne({
       name,
       email,
-      password, // In production, hash this!
+      password: hashedPassword,
       role,
       createdAt: new Date(),
       updatedAt: new Date(),

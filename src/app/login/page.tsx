@@ -42,8 +42,6 @@ export default function LoginPage() {
         router.push('/dashboard/umpire');
       } else if (data.role === 'ADMIN') {
         router.push('/dashboard/admin');
-      } else if (data.role === 'VIEWER') {
-        router.push('/dashboard/viewer');
       }
     } catch (err) {
       setError('An error occurred. Please try again.');

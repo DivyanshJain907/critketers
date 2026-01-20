@@ -118,7 +118,7 @@ export default function LandingPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {liveMatches.map((match) => (
                 <div key={match._id} className="relative overflow-hidden rounded-xl border border-green-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-6 group hover:border-green-400/80 transition-all">
-                  <div className="absolute top-0 right-0 px-3 py-1 bg-gradient-to-r from-green-600 to-emerald-600 rounded-bl-lg text-xs font-bold">
+                  <div className="absolute top-0 right-0 px-3 py-1 bg-linear-to-r from-green-600 to-emerald-600 rounded-bl-lg text-xs font-bold">
                     LIVE
                   </div>
                   <div className="relative z-10">

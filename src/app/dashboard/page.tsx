@@ -21,8 +21,6 @@ export default function DashboardRedirect() {
       router.push('/dashboard/umpire');
     } else if (role === 'ADMIN') {
       router.push('/dashboard/admin');
-    } else if (role === 'VIEWER') {
-      router.push('/dashboard/viewer');
     } else {
       // Unknown role, redirect to home
       router.push('/');
@@ -30,7 +28,7 @@ export default function DashboardRedirect() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 to-slate-800 flex items-center justify-center">
       <div className="text-center">
         <div className="text-6xl mb-4">⏳</div>
         <h1 className="text-3xl font-bold text-white mb-2">Redirecting...</h1>
