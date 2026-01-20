@@ -1,4 +1,4 @@
-import { getMatchesCollection, getTeamsCollection } from "@/lib/mongodb";
+import { getMatchesCollection, getTeamsCollection, getInningsCollection } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 
@@ -7,6 +7,7 @@ export async function GET() {
   try {
     const matchesCollection = await getMatchesCollection();
     const teamsCollection = await getTeamsCollection();
+    const inningsCollection = await getInningsCollection();
 
     const matches = await matchesCollection
       .find({})
@@ -23,11 +24,19 @@ export async function GET() {
           _id: new ObjectId(match.teamBId),
         });
 
+        // Fetch innings for this match
+        const innings = await inningsCollection
+          .find({ matchId: match._id.toString() })
+          .sort({ inningNumber: 1 })
+          .toArray();
+
         return {
           ...match,
+          _id: match._id?.toString(),
           id: match._id?.toString(),
           teamA: teamA ? { ...teamA, id: teamA._id?.toString() } : null,
           teamB: teamB ? { ...teamB, id: teamB._id?.toString() } : null,
+          innings: innings || [],
         };
       })
     );

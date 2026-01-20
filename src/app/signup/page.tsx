@@ -67,82 +67,108 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white overflow-hidden flex items-center justify-center px-4">
-      {/* Animated Background */}
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-600 rounded-full opacity-20 blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-600 rounded-full opacity-20 blur-3xl animate-pulse"></div>
+    <div className="min-h-screen bg-slate-950 text-white overflow-hidden">
+      {/* Background */}
+      <div>
+        {/* Dot Pattern */}
+        <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="dots" x="30" y="30" width="30" height="30" patternUnits="userSpaceOnUse">
+              <circle cx="15" cy="15" r="1.5" fill="#06b6d4"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#dots)"/>
+        </svg>
       </div>
 
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold mb-2">🏏</h1>
-          <h2 className="text-3xl font-bold bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2">CricKeters</h2>
-          <p className="text-slate-400">Create Your Professional Account</p>
+      {/* Header */}
+      <header className="relative z-10 border-b border-slate-800 backdrop-blur-md bg-slate-950/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex justify-between items-center">
+          <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition">
+            <div className="text-4xl">🏏</div>
+            <div>
+              <h1 className="text-2xl font-black bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">CricKeters</h1>
+              <p className="text-xs text-slate-400 font-semibold tracking-widest">LIVE MATCH SCORES</p>
+            </div>
+          </Link>
+          <Link href="/" className="px-6 py-2.5 text-sm font-semibold text-white bg-linear-to-r from-blue-600 to-cyan-600 rounded-lg hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50">
+            ← Back Home
+          </Link>
         </div>
+      </header>
 
-        {/* Card */}
-        <div className="bg-slate-900/80 backdrop-blur-md rounded-xl shadow-2xl p-8 border border-slate-800">
-          <h3 className="text-2xl font-bold text-white mb-6">Sign Up</h3>
+      {/* Main Content */}
+      <main className="relative z-10 min-h-screen flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md">
+          {/* Welcome Section */}
+          <div className="text-center mb-12">
+            <div className="text-6xl mb-4">🏏</div>
+            <h2 className="text-4xl font-black bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-3">
+              Create Account
+            </h2>
+            <p className="text-slate-400 text-sm">Join CricKeters to get started</p>
+          </div>
+
+          {/* Signup Card */}
+          <div className="bg-linear-to-br from-slate-900/80 to-slate-800/60 rounded-xl border border-cyan-500/30 backdrop-blur-sm p-8 shadow-2xl">
 
           {error && (
-            <div className="bg-red-900/30 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg mb-6">
-              {error}
+            <div className="bg-red-900/30 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg mb-6 text-sm">
+              ⚠️ {error}
             </div>
           )}
 
           <form onSubmit={handleSignup} className="space-y-5">
             {/* Name */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Full Name</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Full Name</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full px-4 py-2 border border-slate-700 bg-slate-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-white placeholder-slate-500 transition"
                 placeholder="John Doe"
               />
             </div>
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Email Address</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-2 border border-slate-700 bg-slate-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-white placeholder-slate-500 transition"
                 placeholder="you@example.com"
               />
             </div>
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-2 border border-slate-700 bg-slate-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-white placeholder-slate-500 transition"
                 placeholder="••••••••"
               />
             </div>
 
             {/* Role Selection */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-3">Select Your Role</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-3">Select Your Role</label>
               <div className="space-y-2">
-                <label className="flex items-center p-3 border-2 rounded-lg cursor-pointer transition" style={{ borderColor: role === 'VIEWER' ? '#06B6D4' : '#334155' }}>
+                <label className="flex items-center p-3 border-2 rounded-lg cursor-pointer transition" style={{ borderColor: role === 'VIEWER' ? '#06B6D4' : '#334155', backgroundColor: role === 'VIEWER' ? 'rgba(6, 182, 212, 0.05)' : 'transparent' }}>
                   <input
                     type="radio"
                     value="VIEWER"
                     checked={role === 'VIEWER'}
                     onChange={(e) => handleRoleChange(e.target.value as UserRole)}
-                    className="w-4 h-4 text-blue-600"
+                    className="w-4 h-4 text-cyan-600"
                   />
                   <div className="ml-3">
                     <span className="font-medium text-slate-100">
@@ -152,13 +178,13 @@ export default function SignupPage() {
                   </div>
                 </label>
 
-                <label className="flex items-center p-3 border-2 rounded-lg cursor-pointer transition" style={{ borderColor: role === 'UMPIRE' ? '#06B6D4' : '#334155' }}>
+                <label className="flex items-center p-3 border-2 rounded-lg cursor-pointer transition" style={{ borderColor: role === 'UMPIRE' ? '#06B6D4' : '#334155', backgroundColor: role === 'UMPIRE' ? 'rgba(6, 182, 212, 0.05)' : 'transparent' }}>
                   <input
                     type="radio"
                     value="UMPIRE"
                     checked={role === 'UMPIRE'}
                     onChange={(e) => handleRoleChange(e.target.value as UserRole)}
-                    className="w-4 h-4 text-blue-600"
+                    className="w-4 h-4 text-cyan-600"
                   />
                   <div className="ml-3">
                     <span className="font-medium text-slate-100">
@@ -168,13 +194,13 @@ export default function SignupPage() {
                   </div>
                 </label>
 
-                <label className="flex items-center p-3 border-2 rounded-lg cursor-pointer transition" style={{ borderColor: role === 'ADMIN' ? '#06B6D4' : '#334155' }}>
+                <label className="flex items-center p-3 border-2 rounded-lg cursor-pointer transition" style={{ borderColor: role === 'ADMIN' ? '#06B6D4' : '#334155', backgroundColor: role === 'ADMIN' ? 'rgba(6, 182, 212, 0.05)' : 'transparent' }}>
                   <input
                     type="radio"
                     value="ADMIN"
                     checked={role === 'ADMIN'}
                     onChange={(e) => handleRoleChange(e.target.value as UserRole)}
-                    className="w-4 h-4 text-blue-600"
+                    className="w-4 h-4 text-cyan-600"
                   />
                   <div className="ml-3">
                     <span className="font-medium text-slate-100">
@@ -190,17 +216,17 @@ export default function SignupPage() {
             {role !== 'VIEWER' && (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-slate-300">Registration Key</label>
+                  <label className="block text-sm font-semibold text-slate-300">Registration Key</label>
                   <button
                     type="button"
                     onClick={() => setShowKeyInfo(!showKeyInfo)}
-                    className="text-xs text-blue-400 hover:text-blue-300 transition"
+                    className="text-xs text-cyan-400 hover:text-cyan-300 transition"
                   >
                     {showKeyInfo ? 'Hide' : 'Need a key?'}
                   </button>
                 </div>
                 {showKeyInfo && (
-                  <div className="bg-blue-900/30 border border-blue-600/50 text-blue-300 px-3 py-2 rounded-lg mb-3 text-xs">
+                  <div className="bg-cyan-900/20 border border-cyan-500/30 text-cyan-300 px-3 py-2 rounded-lg mb-3 text-xs">
                     <p>🔐 Your registration key is confidential and provided by administrators. It grants access to privileged roles.</p>
                   </div>
                 )}
@@ -209,7 +235,7 @@ export default function SignupPage() {
                   value={registrationKey}
                   onChange={(e) => setRegistrationKey(e.target.value)}
                   required={true}
-                  className="w-full px-4 py-2 border border-slate-700 bg-slate-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-white placeholder-slate-500 transition"
                   placeholder="Enter your registration key..."
                 />
               </div>
@@ -219,28 +245,36 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-linear-to-r from-blue-600 to-cyan-600 text-white py-3 rounded-lg font-bold hover:from-blue-700 hover:to-cyan-700 transition disabled:opacity-50 mt-6"
+              className="w-full bg-linear-to-r from-blue-600 to-cyan-600 text-white py-3 rounded-lg font-bold hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed mt-6"
             >
-              {loading ? 'Creating Account...' : 'Create Account'}
+              {loading ? '🔄 Creating Account...' : '✨ Create Account'}
             </button>
           </form>
 
           {/* Login Link */}
-          <p className="mt-6 text-center text-slate-400">
-            Already have an account?{' '}
-            <Link href="/login" className="text-blue-400 font-bold hover:text-blue-300 transition">
-              Sign In
+          <div className="mt-6 pt-6 border-t border-slate-700">
+            <p className="text-slate-400 text-sm text-center mb-3">
+              Already have an account?
+            </p>
+            <Link href="/login" className="w-full block text-center px-4 py-3 bg-slate-800/50 border border-slate-700 text-cyan-400 rounded-lg font-semibold hover:bg-slate-700/50 hover:border-cyan-500 transition">
+              Sign In →
             </Link>
-          </p>
+          </div>
 
           {/* Back Link */}
-          <p className="mt-4 text-center">
-            <Link href="/" className="text-slate-400 hover:text-slate-300 transition text-sm">
+          <div className="mt-6 text-center">
+            <Link href="/" className="text-slate-400 hover:text-cyan-400 text-sm transition">
               ← Back to Home
             </Link>
-          </p>
+          </div>
         </div>
-      </div>
+
+        {/* Footer Info */}
+        <p className="text-center text-slate-500 text-xs mt-8">
+          Create an account to get started with CricKeters
+        </p>
+        </div>
+      </main>
     </div>
   );
 }

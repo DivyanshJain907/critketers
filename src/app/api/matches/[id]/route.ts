@@ -27,6 +27,11 @@ export async function GET(
     const extrasCollection = await getExtrasCollection();
     const wicketsCollection = await getWicketsCollection();
 
+    // Validate if id is a valid MongoDB ObjectId
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid match ID format" }, { status: 400 });
+    }
+
     const match = await matchesCollection.findOne({
       _id: new ObjectId(id),
     });

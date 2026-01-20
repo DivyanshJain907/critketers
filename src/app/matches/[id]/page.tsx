@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 interface Player {
   id: string;
@@ -79,9 +79,11 @@ interface Match {
 
 export default function MatchDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const matchId = params?.id as string;
   const [match, setMatch] = useState<Match | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
   const [selectedInnings, setSelectedInnings] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
@@ -97,11 +99,24 @@ export default function MatchDetailPage() {
     fielderId: '',
   });
 
+  // Check authentication on mount
   useEffect(() => {
-    if (matchId) {
+    const token = localStorage.getItem('authToken');
+    const role = localStorage.getItem('userRole');
+    
+    if (!token || role !== 'UMPIRE') {
+      router.push('/login?redirect=' + window.location.pathname);
+      return;
+    }
+    
+    setAuthorized(true);
+  }, [router]);
+
+  useEffect(() => {
+    if (matchId && authorized) {
       fetchMatch();
     }
-  }, [matchId]);
+  }, [matchId, authorized]);
 
   const fetchMatch = async () => {
     try {
@@ -584,7 +599,7 @@ export default function MatchDetailPage() {
       {/* Premium Dark Header */}
       <header className="sticky top-0 z-50 bg-linear-to-r from-blue-600 to-blue-700 text-white shadow-2xl border-b border-blue-500">
         <div className="max-w-6xl mx-auto px-6 py-6">
-          <Link href="/matches" className="text-blue-100 hover:text-white mb-3 inline-block text-sm font-medium transition">
+          <Link href="/" className="text-blue-100 hover:text-white mb-3 inline-block text-sm font-medium transition">
             ← Back to Matches
           </Link>
           <h1 className="text-3xl font-bold">
