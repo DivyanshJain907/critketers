@@ -53,6 +53,12 @@ export default function TeamDetailPage() {
     e.preventDefault();
     if (!newPlayerName.trim()) return;
 
+    // Check if player with same name already exists
+    if (team?.players?.some((p) => p.name.toLowerCase() === newPlayerName.trim().toLowerCase())) {
+      alert(`Player "${newPlayerName}" already exists in this team!`);
+      return;
+    }
+
     setIsAddingPlayer(true);
     try {
       const token = localStorage.getItem('authToken');
@@ -117,47 +123,84 @@ export default function TeamDetailPage() {
     }
   };
 
-  if (loading) return <div className="text-center py-12">Loading...</div>;
-  if (!team) return <div className="text-center py-12">Team not found</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
+        <div className="text-cyan-300 text-lg">Loading team details...</div>
+      </div>
+    );
+  }
+  if (!team) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
+        <div className="text-red-400 text-lg">❌ Team not found</div>
+      </div>
+    );
+  }
 
-  const roleBadgeColor = (role: string) => {
+  const getRoleColor = (role: string) => {
     switch (role) {
       case 'BATSMAN':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+        return 'from-blue-600 to-blue-800 text-blue-100';
       case 'BOWLER':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+        return 'from-red-600 to-red-800 text-red-100';
       case 'ALL_ROUNDER':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+        return 'from-purple-600 to-purple-800 text-purple-100';
       case 'WICKET_KEEPER':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+        return 'from-emerald-600 to-emerald-800 text-emerald-100';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+        return 'from-gray-600 to-gray-800 text-gray-100';
+    }
+  };
+
+  const getRoleEmoji = (role: string) => {
+    switch (role) {
+      case 'BATSMAN':
+        return '🏏';
+      case 'BOWLER':
+        return '🎯';
+      case 'ALL_ROUNDER':
+        return '⭐';
+      case 'WICKET_KEEPER':
+        return '🧤';
+      default:
+        return '👤';
     }
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800">
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Link href="/teams" className="text-blue-600 dark:text-blue-400 hover:underline text-sm mb-2">← Back to Teams</Link>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{team.name}</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
+      {/* Modern Header */}
+      <header className="bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-500 text-white shadow-2xl sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-5 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <Link href="/teams" className="text-white/70 hover:text-white transition text-2xl">←</Link>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">{team.name}</h1>
+              {team.shortCode && <p className="text-cyan-100 text-sm">Code: {team.shortCode}</p>}
+            </div>
+          </div>
+          <div className="text-3xl">🏏</div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-12">
         {/* Add Player Form */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Add Player</h2>
+        <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl border border-cyan-400/20 mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-2">
+            ➕ Add New Player
+          </h2>
           <form onSubmit={handleAddPlayer} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Player Name</label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-cyan-300 mb-2">Player Name</label>
                 <input
                   type="text"
                   value={newPlayerName}
                   onChange={(e) => setNewPlayerName(e.target.value)}
                   placeholder="e.g., Virat Kohli"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 bg-slate-700/50 border border-cyan-500/30 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
                   required
                 />
               </div>
@@ -165,41 +208,63 @@ export default function TeamDetailPage() {
                 <button
                   type="submit"
                   disabled={isAddingPlayer}
-                  className={`w-full font-bold py-2 px-4 rounded-lg transition-colors ${
+                  className={`w-full font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg ${
                     isAddingPlayer
-                      ? 'bg-gray-400 cursor-not-allowed text-gray-600'
-                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                      ? 'bg-gray-600 cursor-not-allowed text-gray-300'
+                      : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white'
                   }`}
                 >
-                  {isAddingPlayer ? '⏳ Adding...' : 'Add Player'}
+                  {isAddingPlayer ? '⏳ Adding...' : '✓ Add'}
                 </button>
               </div>
             </div>
           </form>
         </div>
 
+        {/* Squad Stats */}
+        <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl border border-cyan-400/20 mb-8">
+          <p className="text-cyan-300 text-lg">
+            👥 Total Players: <span className="text-white font-bold text-2xl">{team.players?.length || 0}</span>
+          </p>
+        </div>
+
         {/* Players List */}
         <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Squad ({team.players?.length || 0} Players)</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-2">
+            🏏 Squad
+          </h2>
           {team.players && team.players.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {team.players.map((player) => (
-                <div key={player.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border border-gray-200 dark:border-gray-700">
-                  <div className="flex justify-between items-start">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">{player.name}</h3>
-                    <button
-                      onClick={() => handleDeletePlayer(player.id)}
-                      className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-semibold"
-                    >
-                      ✕
-                    </button>
+                <div
+                  key={player.id}
+                  className="group relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-cyan-400/20 shadow-xl hover:shadow-2xl hover:border-cyan-400/50 transition-all duration-300 h-full"
+                >
+                  <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-r from-cyan-500/0 to-blue-500/0 group-hover:from-cyan-500/10 group-hover:to-blue-500/10 transition duration-300"></div>
+                  <div className="relative">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
+                          {player.jerseyNo && <span className="text-cyan-400">#{player.jerseyNo} </span>}
+                          {player.name}
+                        </h3>
+                      </div>
+                      <button
+                        onClick={() => handleDeletePlayer(player.id)}
+                        className="text-red-400 hover:text-red-300 hover:bg-red-500/20 p-2 rounded-lg transition duration-300 font-bold text-lg"
+                        title="Delete player"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700 text-center text-gray-600 dark:text-gray-400">
-              No players added yet. Add players above!
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-8 md:p-12 text-center border border-cyan-400/20 shadow-xl">
+              <div className="text-6xl mb-4">👥</div>
+              <p className="text-cyan-300 text-lg">No players added yet. Add your first player above!</p>
             </div>
           )}
         </div>

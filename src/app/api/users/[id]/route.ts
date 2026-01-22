@@ -1,4 +1,13 @@
-import { getUsersCollection } from "@/lib/mongodb";
+import { 
+  getUsersCollection, 
+  getMatchesCollection, 
+  getTeamsCollection,
+  getInningsCollection,
+  getBallsCollection,
+  getWicketsCollection,
+  getExtrasCollection,
+  getPlayersCollection
+} from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import jwt from "jsonwebtoken";
@@ -128,6 +137,78 @@ export async function DELETE(
 
     const usersCollection = await getUsersCollection();
 
+    // Get the user to check their role
+    const userToDelete = await usersCollection.findOne({
+      _id: new ObjectId(id),
+    });
+
+    if (!userToDelete) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // If deleting an UMPIRE, cascade delete all their data
+    if (userToDelete.role === 'UMPIRE') {
+      const userId = new ObjectId(id);
+      const umpireId = id;
+
+      // Get all collections
+      const matchesCollection = await getMatchesCollection();
+      const teamsCollection = await getTeamsCollection();
+      const inningsCollection = await getInningsCollection();
+      const ballsCollection = await getBallsCollection();
+      const wicketsCollection = await getWicketsCollection();
+      const extrasCollection = await getExtrasCollection();
+      const playersCollection = await getPlayersCollection();
+
+      // Get all matches and teams owned by this umpire
+      const matches = await matchesCollection.find({ umpireId }).toArray();
+      const teams = await teamsCollection.find({ umpireId }).toArray();
+
+      const matchIds = matches.map(m => m._id);
+      const teamIds = teams.map(t => t._id);
+
+      // Get all innings for these matches
+      const innings = await inningsCollection.find({ matchId: { $in: matchIds } }).toArray();
+      const inningsIds = innings.map(i => i._id);
+
+      // Delete in order of dependencies
+      // 1. Delete all balls for these innings
+      if (inningsIds.length > 0) {
+        await ballsCollection.deleteMany({ inningsId: { $in: inningsIds } });
+      }
+
+      // 2. Delete all wickets for these innings
+      if (inningsIds.length > 0) {
+        await wicketsCollection.deleteMany({ inningsId: { $in: inningsIds } });
+      }
+
+      // 3. Delete all extras for these innings
+      if (inningsIds.length > 0) {
+        await extrasCollection.deleteMany({ inningsId: { $in: inningsIds } });
+      }
+
+      // 4. Delete all innings for these matches
+      if (matchIds.length > 0) {
+        await inningsCollection.deleteMany({ matchId: { $in: matchIds } });
+      }
+
+      // 5. Delete all players for these teams
+      if (teamIds.length > 0) {
+        await playersCollection.deleteMany({ teamId: { $in: teamIds } });
+      }
+
+      // 6. Delete all matches
+      if (matchIds.length > 0) {
+        await matchesCollection.deleteMany({ _id: { $in: matchIds } });
+      }
+
+      // 7. Delete all teams
+      if (teamIds.length > 0) {
+        await teamsCollection.deleteMany({ _id: { $in: teamIds } });
+      }
+    }
+
+    // Delete the user
     const result = await usersCollection.deleteOne({
       _id: new ObjectId(id),
     });
@@ -136,7 +217,10 @@ export async function DELETE(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ message: "User deleted successfully" });
+    return NextResponse.json({ 
+      message: "User and all associated data deleted successfully",
+      dataDeleted: userToDelete.role === 'UMPIRE'
+    });
   } catch (error) {
     console.error("Error deleting user:", error);
     return NextResponse.json(

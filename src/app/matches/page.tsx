@@ -117,79 +117,83 @@ export default function MatchesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800">
-      {/* Public Access Banner */}
-      {!isLoggedIn && (
-        <div className="bg-linear-to-r from-green-600 to-blue-600 text-white py-3 px-4 text-center">
-          <p className="text-sm md:text-base font-semibold">
-            👁️ Watching as a guest • No login required to view matches
-          </p>
-        </div>
-      )}
-
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div>
-            <Link href="/" className="text-blue-600 dark:text-blue-400 hover:underline text-sm mb-2">← Back Home</Link>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">🏏 Live Matches</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
+      {/* Modern Header */}
+      <header className="bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-500 text-white shadow-2xl sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-5 flex justify-between items-center">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="text-3xl md:text-4xl">🏏</div>
+            <h1 className="text-xl md:text-3xl font-bold">Matches</h1>
           </div>
           {isLoggedIn && (
-            <div className="text-right">
-              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Role: <span className="font-semibold">{userRole}</span></p>
-              <Link href={`/dashboard/${userRole?.toLowerCase()}`} className="text-blue-600 dark:text-blue-400 hover:underline text-sm">
-                Go to Dashboard →
-              </Link>
-            </div>
+            <Link
+              href={`/dashboard/${userRole?.toLowerCase()}`}
+              className="px-3 md:px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg font-semibold text-xs md:text-base transition duration-300 shadow-lg"
+            >
+              Dashboard →
+            </Link>
           )}
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-12">
+        {/* Guest Access Info */}
+        {!isLoggedIn && (
+          <div className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-400/40 rounded-xl md:rounded-2xl p-4 md:p-6 mb-8">
+            <p className="text-cyan-300 text-sm md:text-base">
+              👁️ <span className="font-semibold">Viewing as guest</span> • No login required to view matches
+            </p>
+          </div>
+        )}
+
         {/* Create Match Button - Only for Umpire/Admin */}
         {(userRole === 'UMPIRE' || userRole === 'ADMIN') && (
           <div className="mb-8">
             <button
               onClick={() => setShowCreateForm(!showCreateForm)}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors"
+              className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
             >
-              {showCreateForm ? 'Cancel' : '+ Create New Match'}
+              {showCreateForm ? '✕ Cancel' : '+ Create New Match'}
             </button>
           </div>
         )}
 
         {/* Create Match Form */}
         {showCreateForm && (userRole === 'UMPIRE' || userRole === 'ADMIN') && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700 mb-8">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Create New Match</h2>
+          <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl border border-cyan-400/20 mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-2">
+              🎯 Create New Match
+            </h2>
             <form onSubmit={handleCreateMatch} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Match Name (Optional)</label>
+                  <label className="block text-sm font-semibold text-cyan-300 mb-2">Match Name (Optional)</label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="e.g., Championship Final"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-4 py-3 bg-slate-700/50 border border-cyan-500/30 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Overs Limit</label>
+                  <label className="block text-sm font-semibold text-cyan-300 mb-2">Overs Limit</label>
                   <input
                     type="number"
                     value={formData.oversLimit}
                     onChange={(e) => setFormData({ ...formData, oversLimit: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-4 py-3 bg-slate-700/50 border border-cyan-500/30 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Team A</label>
+                  <label className="block text-sm font-semibold text-cyan-300 mb-2">Team A</label>
                   <select
                     value={formData.teamAId}
                     onChange={(e) => setFormData({ ...formData, teamAId: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-4 py-3 bg-slate-700/50 border border-cyan-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
                     required
                   >
                     <option value="">Select Team A</option>
@@ -199,11 +203,11 @@ export default function MatchesPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Team B</label>
+                  <label className="block text-sm font-semibold text-cyan-300 mb-2">Team B</label>
                   <select
                     value={formData.teamBId}
                     onChange={(e) => setFormData({ ...formData, teamBId: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-4 py-3 bg-slate-700/50 border border-cyan-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
                     required
                   >
                     <option value="">Select Team B</option>
@@ -217,7 +221,7 @@ export default function MatchesPage() {
               </div>
               <button
                 type="submit"
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                className="w-full bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 shadow-lg"
               >
                 Create Match
               </button>
@@ -227,32 +231,46 @@ export default function MatchesPage() {
 
         {/* Matches List */}
         <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Matches</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-2">
+            📋 All Matches
+          </h2>
           {loading ? (
-            <div className="text-center text-gray-600 dark:text-gray-400">Loading...</div>
+            <div className="text-center text-cyan-300 py-12 text-lg">Loading matches...</div>
           ) : matches.length === 0 ? (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700 text-center text-gray-600 dark:text-gray-400">
-              No matches yet. Create your first match above!
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-8 md:p-12 text-center border border-cyan-400/20 shadow-xl">
+              <div className="text-6xl mb-4">🏟️</div>
+              <p className="text-cyan-300 text-lg">No matches yet. Create your first match above!</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 md:gap-6">
               {matches.map((match) => (
                 <Link key={match.id} href={`/matches/${match.id}`}>
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 dark:border-gray-700 cursor-pointer">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{match.name || 'Match'}</p>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                          {match.teamA?.name || 'Team A'} vs {match.teamB?.name || 'Team B'}
-                        </h3>
+                  <div className="group relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-cyan-400/20 shadow-xl hover:shadow-2xl hover:border-cyan-400/50 transition-all duration-300 h-full cursor-pointer transform hover:scale-105">
+                    <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-r from-cyan-500/0 to-blue-500/0 group-hover:from-cyan-500/10 group-hover:to-blue-500/10 transition duration-300"></div>
+                    <div className="relative">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <p className="text-cyan-300 text-sm font-semibold mb-1">{match.name || 'Match'}</p>
+                          <h3 className="text-xl md:text-2xl font-bold text-white">
+                            <span className="text-cyan-400">{match.teamA?.name || 'Team A'}</span> vs <span className="text-emerald-400">{match.teamB?.name || 'Team B'}</span>
+                          </h3>
+                        </div>
+                        <span className={`px-4 py-2 rounded-lg font-bold text-sm md:text-base whitespace-nowrap ml-4 ${
+                          match.status === 'NOT_STARTED' ? 'bg-gray-500/30 text-gray-300' :
+                          match.status === 'ONGOING' || match.status === 'LIVE' ? 'bg-green-500/30 text-green-300 animate-pulse' :
+                          match.status === 'COMPLETED' ? 'bg-blue-500/30 text-blue-300' :
+                          'bg-red-500/30 text-red-300'
+                        }`}>
+                          {match.status === 'LIVE' || match.status === 'ONGOING' ? '🔴 ' : ''}{match.status.replace('_', ' ')}
+                        </span>
                       </div>
-                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(match.status)}`}>
-                        {match.status.replace('_', ' ')}
+                      <div className="flex flex-wrap gap-4 text-sm text-cyan-200">
+                        <span>⏱️ {match.oversLimit} Overs</span>
+                        <span>📅 {new Date(match.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <span className="text-cyan-400 font-bold group-hover:text-cyan-300 transition flex items-center gap-1 mt-3">
+                        View Details <span className="group-hover:translate-x-1 transition">→</span>
                       </span>
-                    </div>
-                    <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                      <span>Overs: {match.oversLimit}</span>
-                      <span>Created: {new Date(match.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
                 </Link>

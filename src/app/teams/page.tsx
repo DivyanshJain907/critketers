@@ -65,48 +65,64 @@ export default function TeamsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800">
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div>
-            <Link href="/" className="text-blue-600 dark:text-blue-400 hover:underline text-sm mb-2">← Back Home</Link>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">👥 Team Management</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
+      {/* Modern Header */}
+      <header className="bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-500 text-white shadow-2xl sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-5 flex justify-between items-center">
+          <Link
+            href="/dashboard/umpire"
+            className="px-3 md:px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg font-semibold text-xs md:text-base transition duration-300 shadow-lg"
+          >
+            ← Back
+          </Link>
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="text-3xl md:text-4xl">👥</div>
+            <h1 className="text-xl md:text-3xl font-bold">Team Management</h1>
           </div>
+          <Link
+            href="/matches"
+            className="px-3 md:px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg font-semibold text-xs md:text-base transition duration-300 shadow-lg"
+          >
+            Matches →
+          </Link>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-12">
         {/* Create Team Form */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Create New Team</h2>
+        <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl border border-cyan-400/20 mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-2">
+            🏗️ Create New Team
+          </h2>
           <form onSubmit={handleCreateTeam} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Team Name</label>
+                <label className="block text-sm font-semibold text-cyan-300 mb-2">Team Name</label>
                 <input
                   type="text"
                   value={newTeamName}
                   onChange={(e) => setNewTeamName(e.target.value)}
                   placeholder="e.g., Mumbai Tigers"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 bg-slate-700/50 border border-cyan-500/30 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Short Code (Optional)</label>
+                <label className="block text-sm font-semibold text-cyan-300 mb-2">Short Code</label>
                 <input
                   type="text"
                   value={newTeamCode}
                   onChange={(e) => setNewTeamCode(e.target.value.toUpperCase())}
                   placeholder="e.g., MT"
                   maxLength={3}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 bg-slate-700/50 border border-cyan-500/30 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
                 />
               </div>
               <div className="flex items-end">
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                  className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
                 >
                   Create Team
                 </button>
@@ -116,27 +132,38 @@ export default function TeamsPage() {
         </div>
 
         {/* Teams List */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Teams</h2>
+        <div>
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-2">
+            📋 Your Teams
+          </h2>
           {loading ? (
-            <div className="text-center text-gray-600 dark:text-gray-400">Loading...</div>
+            <div className="text-center text-cyan-300 py-12 text-lg">Loading teams...</div>
           ) : teams.length === 0 ? (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700 text-center text-gray-600 dark:text-gray-400">
-              No teams yet. Create your first team above!
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-8 md:p-12 text-center border border-cyan-400/20 shadow-xl">
+              <div className="text-6xl mb-4">📭</div>
+              <p className="text-cyan-300 text-lg">No teams yet. Create your first team above!</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {teams.map((team) => (
                 <Link key={team.id} href={`/teams/${team.id}`}>
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 dark:border-gray-700 h-full cursor-pointer">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                      {team.name}
-                      {team.shortCode && <span className="text-sm text-gray-600 dark:text-gray-400 ml-2">({team.shortCode})</span>}
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400 mb-3">
-                      <strong>{team.players?.length || 0}</strong> players
-                    </p>
-                    <span className="text-blue-600 dark:text-blue-400 font-medium">View Team →</span>
+                  <div className="group relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-cyan-400/20 shadow-xl hover:shadow-2xl hover:border-cyan-400/50 transition-all duration-300 h-full cursor-pointer transform hover:scale-105">
+                    <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-r from-cyan-500/0 to-blue-500/0 group-hover:from-cyan-500/10 group-hover:to-blue-500/10 transition duration-300"></div>
+                    <div className="relative">
+                      <div className="flex items-start justify-between mb-4">
+                        <h3 className="text-xl md:text-2xl font-bold text-white">
+                          {team.name}
+                          {team.shortCode && <span className="text-sm text-cyan-400 ml-2">({team.shortCode})</span>}
+                        </h3>
+                        <div className="text-3xl">🏏</div>
+                      </div>
+                      <p className="text-cyan-300 mb-3">
+                        👥 <strong>{team.players?.length || 0}</strong> players
+                      </p>
+                      <span className="text-cyan-400 font-bold group-hover:text-cyan-300 transition flex items-center gap-1">
+                        View Team <span className="group-hover:translate-x-1 transition">→</span>
+                      </span>
+                    </div>
                   </div>
                 </Link>
               ))}
