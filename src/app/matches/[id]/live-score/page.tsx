@@ -391,7 +391,7 @@ export default function LiveScorePage() {
                           
                           // Mark maidens (overs with 0 runs)
                           Object.keys(bowlerStats).forEach(bowlerId => {
-                            const bowlerBalls = innings.balls.filter((b: any) => b.bowlerId === bowlerId);
+                            const bowlerBalls = (innings.balls || []).filter((b: any) => b.bowlerId === bowlerId);
                             let currentOver = -1;
                             let currentOverRuns = 0;
                             
