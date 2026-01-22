@@ -179,13 +179,6 @@ export default function SignupPage() {
               Sign In →
             </Link>
           </div>
-
-          {/* Back Link */}
-          <div className="mt-6 text-center">
-            <Link href="/" className="text-slate-400 hover:text-cyan-400 text-sm transition">
-              ← Back to Home
-            </Link>
-          </div>
           </div>
         </div>
       </main>
