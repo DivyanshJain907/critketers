@@ -15,6 +15,24 @@ interface Team {
   players: Player[];
 }
 
+interface Ball {
+  id?: string;
+  ballNumber?: number;
+  overNumber?: number;
+  strikerPlayerId: string;
+  bowlerId: string;
+  runs: number;
+  ballType?: string;
+}
+
+interface Wicket {
+  id?: string;
+  playerOutId: string;
+  bowlerId: string;
+  fielderId?: string;
+  wicketType: string;
+}
+
 interface Innings {
   id: string;
   inningsNumber: number;
@@ -24,6 +42,8 @@ interface Innings {
   totalWickets: number;
   openingBatsmanId?: string;
   openingBowlerId?: string;
+  balls?: Ball[];
+  wickets?: Wicket[];
 }
 
 interface Match {
@@ -251,6 +271,173 @@ export default function LiveScorePage() {
                   <p className="text-xs text-slate-400 mt-2">
                     Limit: {match.oversLimit} overs
                   </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Player Statistics */}
+            <div className="space-y-8">
+              {/* Batsmen Stats */}
+              <div className="bg-linear-to-br from-cyan-900/20 to-blue-900/20 rounded-xl border border-cyan-500/30 p-6">
+                <h3 className="text-lg font-bold text-cyan-300 mb-4 flex items-center gap-2">
+                  🏏 Batting Statistics
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-700">
+                        <th className="text-left py-3 px-4 text-slate-400 font-semibold">Player</th>
+                        <th className="text-center py-3 px-4 text-slate-400 font-semibold">Runs</th>
+                        <th className="text-center py-3 px-4 text-slate-400 font-semibold">Balls</th>
+                        <th className="text-center py-3 px-4 text-slate-400 font-semibold">4s</th>
+                        <th className="text-center py-3 px-4 text-slate-400 font-semibold">6s</th>
+                        <th className="text-center py-3 px-4 text-slate-400 font-semibold">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        const battingTeamId = match.innings[selectedInnings].teamId;
+                        const battingTeam = battingTeamId === match.teamA.id ? match.teamA : match.teamB;
+                        const innings = match.innings[selectedInnings];
+                        
+                        // Compute player stats
+                        const playerStats: { [key: string]: { runs: number; balls: number; fours: number; sixes: number; isOut: boolean } } = {};
+                        
+                        if (innings.balls && innings.balls.length > 0) {
+                          innings.balls.forEach((ball: any) => {
+                            const strikerId = ball.strikerPlayerId;
+                            if (!playerStats[strikerId]) {
+                              playerStats[strikerId] = { runs: 0, balls: 0, fours: 0, sixes: 0, isOut: false };
+                            }
+                            playerStats[strikerId].runs += ball.runs || 0;
+                            playerStats[strikerId].balls += 1;
+                            if (ball.runs === 4) playerStats[strikerId].fours += 1;
+                            if (ball.runs === 6) playerStats[strikerId].sixes += 1;
+                          });
+                        }
+                        
+                        if (innings.wickets && innings.wickets.length > 0) {
+                          innings.wickets.forEach((wicket: any) => {
+                            if (playerStats[wicket.playerOutId]) {
+                              playerStats[wicket.playerOutId].isOut = true;
+                            }
+                          });
+                        }
+                        
+                        return battingTeam.players?.map(player => {
+                          const stats = playerStats[player.id] || { runs: 0, balls: 0, fours: 0, sixes: 0, isOut: false };
+                          const strikeRate = stats.balls > 0 ? ((stats.runs / stats.balls) * 100).toFixed(2) : '0.00';
+                          
+                          return (
+                            <tr key={player.id} className="border-b border-slate-800 hover:bg-slate-800/30">
+                              <td className="py-3 px-4 text-white font-medium">{player.name}</td>
+                              <td className="text-center py-3 px-4 text-cyan-300 font-bold text-lg">{stats.runs}</td>
+                              <td className="text-center py-3 px-4 text-slate-300">{stats.balls}</td>
+                              <td className="text-center py-3 px-4 text-slate-300">{stats.fours}</td>
+                              <td className="text-center py-3 px-4 text-yellow-300 font-semibold">{stats.sixes}</td>
+                              <td className="text-center py-3 px-4">
+                                {stats.isOut ? (
+                                  <span className="text-red-400 font-semibold text-sm">OUT</span>
+                                ) : stats.balls > 0 ? (
+                                  <span className="text-green-400 font-semibold text-sm">Not Out</span>
+                                ) : (
+                                  <span className="text-slate-500 text-sm">-</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        });
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Bowlers Stats */}
+              <div className="bg-linear-to-br from-emerald-900/20 to-teal-900/20 rounded-xl border border-emerald-500/30 p-6">
+                <h3 className="text-lg font-bold text-emerald-300 mb-4 flex items-center gap-2">
+                  ⚾ Bowling Statistics
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-700">
+                        <th className="text-left py-3 px-4 text-slate-400 font-semibold">Player</th>
+                        <th className="text-center py-3 px-4 text-slate-400 font-semibold">Overs</th>
+                        <th className="text-center py-3 px-4 text-slate-400 font-semibold">Runs</th>
+                        <th className="text-center py-3 px-4 text-slate-400 font-semibold">Wickets</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        const battingTeamId = match.innings[selectedInnings].teamId;
+                        const bowlingTeamId = battingTeamId === match.teamA.id ? match.teamB.id : match.teamA.id;
+                        const bowlingTeam = bowlingTeamId === match.teamA.id ? match.teamA : match.teamB;
+                        const innings = match.innings[selectedInnings];
+                        
+                        // Compute bowler stats
+                        const bowlerStats: { [key: string]: { runs: number; balls: number; wickets: number; maidens: number; overs: Set<number> } } = {};
+                        
+                        if (innings.balls && innings.balls.length > 0) {
+                          innings.balls.forEach((ball: any) => {
+                            const bowlerId = ball.bowlerId;
+                            if (!bowlerStats[bowlerId]) {
+                              bowlerStats[bowlerId] = { runs: 0, balls: 0, wickets: 0, maidens: 0, overs: new Set() };
+                            }
+                            bowlerStats[bowlerId].runs += ball.runs || 0;
+                            bowlerStats[bowlerId].balls += 1;
+                            bowlerStats[bowlerId].overs.add(ball.overNumber || 0);
+                          });
+                          
+                          // Mark maidens (overs with 0 runs)
+                          Object.keys(bowlerStats).forEach(bowlerId => {
+                            const bowlerBalls = innings.balls.filter((b: any) => b.bowlerId === bowlerId);
+                            let currentOver = -1;
+                            let currentOverRuns = 0;
+                            
+                            bowlerBalls.forEach((ball: any) => {
+                              if (ball.overNumber !== currentOver) {
+                                if (currentOver >= 0 && currentOverRuns === 0) {
+                                  bowlerStats[bowlerId].maidens += 1;
+                                }
+                                currentOver = ball.overNumber;
+                                currentOverRuns = 0;
+                              }
+                              currentOverRuns += ball.runs || 0;
+                            });
+                            
+                            if (currentOverRuns === 0 && currentOver >= 0) {
+                              bowlerStats[bowlerId].maidens += 1;
+                            }
+                          });
+                        }
+                        
+                        if (innings.wickets && innings.wickets.length > 0) {
+                          innings.wickets.forEach((wicket: any) => {
+                            if (bowlerStats[wicket.bowlerId]) {
+                              bowlerStats[wicket.bowlerId].wickets += 1;
+                            }
+                          });
+                        }
+                        
+                        return bowlingTeam.players?.map(player => {
+                          const stats = bowlerStats[player.id] || { runs: 0, balls: 0, wickets: 0, maidens: 0, overs: new Set() };
+                          const totalOvers = stats.overs.size;
+                          const oversDisplay = totalOvers > 0 ? totalOvers : '-';
+                          const economy = stats.balls > 0 ? ((stats.runs / (stats.balls / 6)) * 1).toFixed(2) : '0.00';
+                          
+                          return (
+                            <tr key={player.id} className="border-b border-slate-800 hover:bg-slate-800/30">
+                              <td className="py-3 px-4 text-white font-medium">{player.name}</td>
+                              <td className="text-center py-3 px-4 text-slate-300">{oversDisplay}</td>
+                              <td className="text-center py-3 px-4 text-red-300 font-bold text-lg">{stats.runs}</td>
+                              <td className="text-center py-3 px-4 text-green-300 font-bold text-lg">{stats.wickets}</td>
+                            </tr>
+                          );
+                        });
+                      })()}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
