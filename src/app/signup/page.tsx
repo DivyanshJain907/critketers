@@ -4,20 +4,14 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-type UserRole = 'UMPIRE' | 'ADMIN';
-
 export default function SignupPage() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [registrationKey, setRegistrationKey] = useState('');
-  const [showRegistrationKey, setShowRegistrationKey] = useState(false);
-  const [role, setRole] = useState<UserRole>('UMPIRE');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showKeyInfo, setShowKeyInfo] = useState(false);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +22,7 @@ export default function SignupPage() {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role, registrationKey }),
+        body: JSON.stringify({ name, email, password, role: 'UMPIRE' }),
       });
 
       const data = await res.json();
@@ -45,22 +39,14 @@ export default function SignupPage() {
       localStorage.setItem('userId', data.userId);
       localStorage.setItem('userName', data.name);
 
-      // Redirect based on role
-      if (data.role === 'UMPIRE') {
-        router.push('/dashboard/umpire');
-      } else if (data.role === 'ADMIN') {
-        router.push('/dashboard/admin');
-      }
+      // Redirect to umpire dashboard
+      router.push('/dashboard/umpire');
     } catch (err) {
       setError('An error occurred. Please try again.');
       console.error('Signup error:', err);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleRoleChange = (newRole: UserRole) => {
-    setRole(newRole);
   };
 
   return (
@@ -161,90 +147,6 @@ export default function SignupPage() {
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-14-14zM10 3a7 7 0 016.513 3.835l-2.338-2.337A5 5 0 007.337 5.663L5.338 3.664C6.766 3.234 8.362 3 10 3zm0 14c-1.638 0-3.234-.234-4.662-.664l1.999-1.999A5 5 0 0012.663 14.337l2.337 2.337C13.234 16.766 11.638 17 10 17z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Role Selection */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-3">Select Your Role</label>
-              <div className="space-y-2">
-                <label className="flex items-center p-3 border-2 rounded-lg cursor-pointer transition" style={{ borderColor: role === 'UMPIRE' ? '#06B6D4' : '#334155', backgroundColor: role === 'UMPIRE' ? 'rgba(6, 182, 212, 0.05)' : 'transparent' }}>
-                  <input
-                    type="radio"
-                    value="UMPIRE"
-                    checked={role === 'UMPIRE'}
-                    onChange={(e) => handleRoleChange(e.target.value as UserRole)}
-                    className="w-4 h-4 text-cyan-600"
-                  />
-                  <div className="ml-3">
-                    <span className="font-medium text-slate-100">
-                      👨‍⚖️ Umpire - Record matches and manage teams
-                    </span>
-                    <p className="text-xs text-slate-400 mt-1">Requires registration key</p>
-                  </div>
-                </label>
-
-                <label className="flex items-center p-3 border-2 rounded-lg cursor-pointer transition" style={{ borderColor: role === 'ADMIN' ? '#06B6D4' : '#334155', backgroundColor: role === 'ADMIN' ? 'rgba(6, 182, 212, 0.05)' : 'transparent' }}>
-                  <input
-                    type="radio"
-                    value="ADMIN"
-                    checked={role === 'ADMIN'}
-                    onChange={(e) => handleRoleChange(e.target.value as UserRole)}
-                    className="w-4 h-4 text-cyan-600"
-                  />
-                  <div className="ml-3">
-                    <span className="font-medium text-slate-100">
-                      🔧 Admin - Full system access
-                    </span>
-                    <p className="text-xs text-slate-400 mt-1">Requires registration key</p>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            {/* Registration Key - Required for all roles */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-semibold text-slate-300">Registration Key</label>
-                <button
-                  type="button"
-                  onClick={() => setShowKeyInfo(!showKeyInfo)}
-                  className="text-xs text-cyan-400 hover:text-cyan-300 transition"
-                >
-                  {showKeyInfo ? 'Hide' : 'Need a key?'}
-                </button>
-              </div>
-              {showKeyInfo && (
-                <div className="bg-cyan-900/20 border border-cyan-500/30 text-cyan-300 px-3 py-2 rounded-lg mb-3 text-xs">
-                  <p>🔐 Your registration key is confidential and provided by administrators. It grants access to privileged roles.</p>
-                </div>
-              )}
-              <div className="relative">
-                <input
-                  type={showRegistrationKey ? 'text' : 'password'}
-                  value={registrationKey}
-                  onChange={(e) => setRegistrationKey(e.target.value)}
-                  required={true}
-                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-white placeholder-slate-500 transition pr-12"
-                  placeholder="Enter your registration key..."
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowRegistrationKey(!showRegistrationKey)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-400 transition"
-                  aria-label={showRegistrationKey ? 'Hide key' : 'Show key'}
-                >
-                  {showRegistrationKey ? (
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                       <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />

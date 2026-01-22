@@ -8,7 +8,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-producti
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, password, role, registrationKey } = body;
+    const { name, email, password, role } = body;
 
     if (!name || !email || !password || !role) {
       return NextResponse.json(
@@ -17,25 +17,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate registration keys for privileged roles
-    if (role === 'UMPIRE') {
-      const umpireKey = process.env.UMPIRE_REGISTRATION_KEY;
-      if (!registrationKey || registrationKey !== umpireKey) {
-        return NextResponse.json(
-          { error: 'Invalid or missing Umpire registration key' },
-          { status: 401 }
-        );
-      }
-    } else if (role === 'ADMIN') {
-      const adminKey = process.env.ADMIN_REGISTRATION_KEY;
-      if (!registrationKey || registrationKey !== adminKey) {
-        return NextResponse.json(
-          { error: 'Invalid or missing Admin registration key' },
-          { status: 401 }
-        );
-      }
+    // Only allow UMPIRE role for signup
+    if (role !== 'UMPIRE') {
+      return NextResponse.json(
+        { error: 'Only Umpire role is allowed for signup' },
+        { status: 400 }
+      );
     }
-    // All roles require a registration key
 
     const usersCollection = await getUsersCollection();
 
