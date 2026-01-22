@@ -90,7 +90,7 @@ export default function LoginPage() {
           <div className="text-center mb-8 sm:mb-12">
             <div className="text-5xl sm:text-6xl mb-3 sm:mb-4">🏏</div>
             <h2 className="text-3xl sm:text-4xl font-black bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2 sm:mb-3">
-              🔐 Umpire Login
+              🔐 Empire Login
             </h2>
             <p className="text-slate-400 text-xs sm:text-sm px-2">Sign in to manage live cricket matches</p>
           </div>
@@ -172,7 +172,7 @@ export default function LoginPage() {
 
           {/* Footer Info */}
           <p className="text-center text-slate-500 text-xs mt-6 sm:mt-8 px-2">
-            Only umpires can access the scoring system
+            Only empires can access the scoring system
           </p>
         </div>
       </main>

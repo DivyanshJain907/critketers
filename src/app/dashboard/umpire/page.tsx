@@ -22,7 +22,7 @@ export default function UmpireDashboard() {
       return;
     }
 
-    setUserName(name || 'Umpire');
+    setUserName(name || 'Empire');
     fetchData();
   }, [router]);
 
@@ -103,7 +103,7 @@ export default function UmpireDashboard() {
               <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-xl py-2 z-50">
                 <div className="px-4 py-3 border-b border-gray-200">
                   <p className="font-semibold text-sm">{userName}</p>
-                  <p className="text-xs text-gray-500">👤 Umpire</p>
+                  <p className="text-xs text-gray-500">👤 Empire</p>
                 </div>
                 <button
                   onClick={() => {

@@ -107,7 +107,7 @@ export default function LandingPage() {
           </div>
           <nav className="flex items-center space-x-6">
             <Link href="/login" className="px-6 py-2.5 text-sm font-semibold text-white bg-linear-to-r from-blue-600 to-cyan-600 rounded-lg hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50">
-              🔐 Umpire Login
+              🔐 Empire Login
             </Link>
           </nav>
         </div>
