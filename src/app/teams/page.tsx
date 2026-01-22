@@ -65,9 +65,9 @@ export default function TeamsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
+    <div className="min-h-screen bg-linear-to-br from-slate-950 via-blue-950 to-slate-900">
       {/* Modern Header */}
-      <header className="bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-500 text-white shadow-2xl sticky top-0 z-50">
+      <header className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-500 text-white shadow-2xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-5 flex justify-between items-center">
           <Link
             href="/dashboard/umpire"
@@ -91,7 +91,7 @@ export default function TeamsPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-12">
         {/* Create Team Form */}
-        <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl border border-cyan-400/20 mb-8">
+        <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl border border-cyan-400/20 mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-2">
             🏗️ Create New Team
           </h2>
@@ -122,7 +122,7 @@ export default function TeamsPage() {
               <div className="flex items-end">
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+                  className="w-full bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
                 >
                   Create Team
                 </button>
@@ -139,7 +139,7 @@ export default function TeamsPage() {
           {loading ? (
             <div className="text-center text-cyan-300 py-12 text-lg">Loading teams...</div>
           ) : teams.length === 0 ? (
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-8 md:p-12 text-center border border-cyan-400/20 shadow-xl">
+            <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-8 md:p-12 text-center border border-cyan-400/20 shadow-xl">
               <div className="text-6xl mb-4">📭</div>
               <p className="text-cyan-300 text-lg">No teams yet. Create your first team above!</p>
             </div>
@@ -147,8 +147,8 @@ export default function TeamsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {teams.map((team) => (
                 <Link key={team.id} href={`/teams/${team.id}`}>
-                  <div className="group relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-cyan-400/20 shadow-xl hover:shadow-2xl hover:border-cyan-400/50 transition-all duration-300 h-full cursor-pointer transform hover:scale-105">
-                    <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-r from-cyan-500/0 to-blue-500/0 group-hover:from-cyan-500/10 group-hover:to-blue-500/10 transition duration-300"></div>
+                  <div className="group relative bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-cyan-400/20 shadow-xl hover:shadow-2xl hover:border-cyan-400/50 transition-all duration-300 h-full cursor-pointer transform hover:scale-105">
+                    <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-linear-to-r from-cyan-500/0 to-blue-500/0 group-hover:from-cyan-500/10 group-hover:to-blue-500/10 transition duration-300"></div>
                     <div className="relative">
                       <div className="flex items-start justify-between mb-4">
                         <h3 className="text-xl md:text-2xl font-bold text-white">

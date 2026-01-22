@@ -117,9 +117,9 @@ export default function MatchesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
+    <div className="min-h-screen bg-linear-to-br from-slate-950 via-blue-950 to-slate-900">
       {/* Modern Header */}
-      <header className="bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-500 text-white shadow-2xl sticky top-0 z-50">
+      <header className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-500 text-white shadow-2xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-5 flex justify-between items-center">
           <div className="flex items-center gap-2 md:gap-3">
             <div className="text-3xl md:text-4xl">🏏</div>
@@ -140,7 +140,7 @@ export default function MatchesPage() {
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-12">
         {/* Guest Access Info */}
         {!isLoggedIn && (
-          <div className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-400/40 rounded-xl md:rounded-2xl p-4 md:p-6 mb-8">
+          <div className="bg-linear-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-400/40 rounded-xl md:rounded-2xl p-4 md:p-6 mb-8">
             <p className="text-cyan-300 text-sm md:text-base">
               👁️ <span className="font-semibold">Viewing as guest</span> • No login required to view matches
             </p>
@@ -152,7 +152,7 @@ export default function MatchesPage() {
           <div className="mb-8">
             <button
               onClick={() => setShowCreateForm(!showCreateForm)}
-              className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+              className="bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
             >
               {showCreateForm ? '✕ Cancel' : '+ Create New Match'}
             </button>
@@ -161,7 +161,7 @@ export default function MatchesPage() {
 
         {/* Create Match Form */}
         {showCreateForm && (userRole === 'UMPIRE' || userRole === 'ADMIN') && (
-          <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl border border-cyan-400/20 mb-8">
+          <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl border border-cyan-400/20 mb-8">
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-2">
               🎯 Create New Match
             </h2>
@@ -221,7 +221,7 @@ export default function MatchesPage() {
               </div>
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 shadow-lg"
+                className="w-full bg-linear-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 shadow-lg"
               >
                 Create Match
               </button>
@@ -237,7 +237,7 @@ export default function MatchesPage() {
           {loading ? (
             <div className="text-center text-cyan-300 py-12 text-lg">Loading matches...</div>
           ) : matches.length === 0 ? (
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-8 md:p-12 text-center border border-cyan-400/20 shadow-xl">
+            <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-8 md:p-12 text-center border border-cyan-400/20 shadow-xl">
               <div className="text-6xl mb-4">🏟️</div>
               <p className="text-cyan-300 text-lg">No matches yet. Create your first match above!</p>
             </div>
@@ -245,8 +245,8 @@ export default function MatchesPage() {
             <div className="grid grid-cols-1 gap-4 md:gap-6">
               {matches.map((match) => (
                 <Link key={match.id} href={`/matches/${match.id}`}>
-                  <div className="group relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-cyan-400/20 shadow-xl hover:shadow-2xl hover:border-cyan-400/50 transition-all duration-300 h-full cursor-pointer transform hover:scale-105">
-                    <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-r from-cyan-500/0 to-blue-500/0 group-hover:from-cyan-500/10 group-hover:to-blue-500/10 transition duration-300"></div>
+                  <div className="group relative bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-cyan-400/20 shadow-xl hover:shadow-2xl hover:border-cyan-400/50 transition-all duration-300 h-full cursor-pointer transform hover:scale-105">
+                    <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-linear-to-r from-cyan-500/0 to-blue-500/0 group-hover:from-cyan-500/10 group-hover:to-blue-500/10 transition duration-300"></div>
                     <div className="relative">
                       <div className="flex justify-between items-start mb-4">
                         <div>

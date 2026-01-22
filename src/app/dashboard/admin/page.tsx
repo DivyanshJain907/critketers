@@ -194,9 +194,9 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
+    <div className="min-h-screen bg-linear-to-br from-slate-950 via-blue-950 to-slate-900">
       {/* Header */}
-      <header className="bg-gradient-to-r from-red-600 via-pink-600 to-red-700 text-white shadow-2xl sticky top-0 z-50">
+      <header className="bg-linear-to-r from-red-600 via-pink-600 to-red-700 text-white shadow-2xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-5 flex justify-between items-center">
           <div className="flex items-center gap-2 md:gap-3">
             <div className="text-3xl md:text-4xl">🔧</div>
@@ -222,17 +222,17 @@ export default function AdminDashboard() {
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-12">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
-          <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/10 border border-cyan-400/30 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm">
+          <div className="bg-linear-to-br from-blue-500/20 to-cyan-500/10 border border-cyan-400/30 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm">
             <p className="text-cyan-300 text-xs md:text-sm font-semibold mb-2">Total Teams</p>
             <h3 className="text-4xl md:text-5xl font-bold text-cyan-400">{stats.teams}</h3>
             <p className="text-cyan-400/70 text-xs md:text-sm mt-2">Teams created</p>
           </div>
-          <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/10 border border-green-400/30 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm">
+          <div className="bg-linear-to-br from-green-500/20 to-emerald-500/10 border border-green-400/30 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm">
             <p className="text-green-300 text-xs md:text-sm font-semibold mb-2">Total Players</p>
             <h3 className="text-4xl md:text-5xl font-bold text-green-400">{stats.players}</h3>
             <p className="text-green-400/70 text-xs md:text-sm mt-2">Players registered</p>
           </div>
-          <div className="bg-gradient-to-br from-orange-500/20 to-red-500/10 border border-orange-400/30 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm">
+          <div className="bg-linear-to-br from-orange-500/20 to-red-500/10 border border-orange-400/30 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm">
             <p className="text-orange-300 text-xs md:text-sm font-semibold mb-2">Total Matches</p>
             <h3 className="text-4xl md:text-5xl font-bold text-orange-400">{stats.matches}</h3>
             <p className="text-orange-400/70 text-xs md:text-sm mt-2">Matches created</p>
@@ -248,9 +248,9 @@ export default function AdminDashboard() {
                 fetchUsers();
               }
             }}
-            className="group relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-red-400/20 shadow-xl hover:shadow-2xl hover:border-red-400/50 transition-all duration-300 h-full cursor-pointer transform hover:scale-105"
+            className="group relative bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-red-400/20 shadow-xl hover:shadow-2xl hover:border-red-400/50 transition-all duration-300 h-full cursor-pointer transform hover:scale-105"
           >
-            <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-r from-red-500/0 to-pink-500/0 group-hover:from-red-500/10 group-hover:to-pink-500/10 transition duration-300"></div>
+            <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-linear-to-r from-red-500/0 to-pink-500/0 group-hover:from-red-500/10 group-hover:to-pink-500/10 transition duration-300"></div>
             <div className="relative">
               <div className="flex items-start justify-between mb-4">
                 <h3 className="text-xl md:text-2xl font-bold text-white">👤 Manage Users</h3>
@@ -264,8 +264,8 @@ export default function AdminDashboard() {
           </button>
 
           <Link href="/teams">
-            <div className="group relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-blue-400/20 shadow-xl hover:shadow-2xl hover:border-blue-400/50 transition-all duration-300 h-full cursor-pointer transform hover:scale-105">
-              <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-r from-blue-500/0 to-cyan-500/0 group-hover:from-blue-500/10 group-hover:to-cyan-500/10 transition duration-300"></div>
+            <div className="group relative bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-blue-400/20 shadow-xl hover:shadow-2xl hover:border-blue-400/50 transition-all duration-300 h-full cursor-pointer transform hover:scale-105">
+              <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-linear-to-r from-blue-500/0 to-cyan-500/0 group-hover:from-blue-500/10 group-hover:to-cyan-500/10 transition duration-300"></div>
               <div className="relative">
                 <div className="flex items-start justify-between mb-4">
                   <h3 className="text-xl md:text-2xl font-bold text-white">👥 Manage Teams</h3>
@@ -280,8 +280,8 @@ export default function AdminDashboard() {
           </Link>
 
           <Link href="/matches">
-            <div className="group relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-purple-400/20 shadow-xl hover:shadow-2xl hover:border-purple-400/50 transition-all duration-300 h-full cursor-pointer transform hover:scale-105">
-              <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-r from-purple-500/0 to-pink-500/0 group-hover:from-purple-500/10 group-hover:to-pink-500/10 transition duration-300"></div>
+            <div className="group relative bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-purple-400/20 shadow-xl hover:shadow-2xl hover:border-purple-400/50 transition-all duration-300 h-full cursor-pointer transform hover:scale-105">
+              <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-linear-to-r from-purple-500/0 to-pink-500/0 group-hover:from-purple-500/10 group-hover:to-pink-500/10 transition duration-300"></div>
               <div className="relative">
                 <div className="flex items-start justify-between mb-4">
                   <h3 className="text-xl md:text-2xl font-bold text-white">🏏 Manage Matches</h3>
@@ -298,14 +298,14 @@ export default function AdminDashboard() {
 
         {/* User Management Section */}
         {showUserManagement && (
-        <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 mb-8 border border-red-400/20 shadow-xl">
+        <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 mb-8 border border-red-400/20 shadow-xl">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-2">
               👤 User Management
             </h2>
             <button
               onClick={() => setShowUserManagement(false)}
-              className="px-3 md:px-4 py-2 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white rounded-lg font-semibold text-xs md:text-base transition duration-300 shadow-lg"
+              className="px-3 md:px-4 py-2 bg-linear-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white rounded-lg font-semibold text-xs md:text-base transition duration-300 shadow-lg"
             >
               Close
             </button>
@@ -384,7 +384,7 @@ export default function AdminDashboard() {
 
         {/* Admin Features - Hidden when user management is open */}
         {!showUserManagement && (
-        <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 mb-8 border border-cyan-400/20 shadow-xl">
+        <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 mb-8 border border-cyan-400/20 shadow-xl">
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-2">
             🎯 Quick Stats
           </h2>
@@ -410,7 +410,7 @@ export default function AdminDashboard() {
         )}
 
         {/* Maintenance Mode */}
-        <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-yellow-400/20 shadow-xl">
+        <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-yellow-400/20 shadow-xl">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0 mb-6">
             <div>
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 flex items-center gap-2">
@@ -441,8 +441,8 @@ export default function AdminDashboard() {
               maintenanceLoading
                 ? 'bg-gray-600/50 cursor-not-allowed'
                 : maintenanceMode
-                ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
-                : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800'
+                ? 'bg-linear-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
+                : 'bg-linear-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800'
             }`}
           >
             {maintenanceLoading ? '⏳ Updating...' : maintenanceMode ? '✓ Disable Maintenance Mode' : '✗ Enable Maintenance Mode'}

@@ -125,14 +125,14 @@ export default function TeamDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
         <div className="text-cyan-300 text-lg">Loading team details...</div>
       </div>
     );
   }
   if (!team) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
         <div className="text-red-400 text-lg">❌ Team not found</div>
       </div>
     );
@@ -169,9 +169,9 @@ export default function TeamDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
+    <div className="min-h-screen bg-linear-to-br from-slate-950 via-blue-950 to-slate-900">
       {/* Modern Header */}
-      <header className="bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-500 text-white shadow-2xl sticky top-0 z-50">
+      <header className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-500 text-white shadow-2xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-5 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <Link href="/teams" className="text-white/70 hover:text-white transition text-2xl">←</Link>
@@ -187,7 +187,7 @@ export default function TeamDetailPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-12">
         {/* Add Player Form */}
-        <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl border border-cyan-400/20 mb-8">
+        <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl border border-cyan-400/20 mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-2">
             ➕ Add New Player
           </h2>
@@ -211,7 +211,7 @@ export default function TeamDetailPage() {
                   className={`w-full font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg ${
                     isAddingPlayer
                       ? 'bg-gray-600 cursor-not-allowed text-gray-300'
-                      : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white'
+                      : 'bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white'
                   }`}
                 >
                   {isAddingPlayer ? '⏳ Adding...' : '✓ Add'}
@@ -222,7 +222,7 @@ export default function TeamDetailPage() {
         </div>
 
         {/* Squad Stats */}
-        <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl border border-cyan-400/20 mb-8">
+        <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl border border-cyan-400/20 mb-8">
           <p className="text-cyan-300 text-lg">
             👥 Total Players: <span className="text-white font-bold text-2xl">{team.players?.length || 0}</span>
           </p>
@@ -238,9 +238,9 @@ export default function TeamDetailPage() {
               {team.players.map((player) => (
                 <div
                   key={player.id}
-                  className="group relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-cyan-400/20 shadow-xl hover:shadow-2xl hover:border-cyan-400/50 transition-all duration-300 h-full"
+                  className="group relative bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-cyan-400/20 shadow-xl hover:shadow-2xl hover:border-cyan-400/50 transition-all duration-300 h-full"
                 >
-                  <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-r from-cyan-500/0 to-blue-500/0 group-hover:from-cyan-500/10 group-hover:to-blue-500/10 transition duration-300"></div>
+                  <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-linear-to-r from-cyan-500/0 to-blue-500/0 group-hover:from-cyan-500/10 group-hover:to-blue-500/10 transition duration-300"></div>
                   <div className="relative">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
@@ -262,7 +262,7 @@ export default function TeamDetailPage() {
               ))}
             </div>
           ) : (
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-8 md:p-12 text-center border border-cyan-400/20 shadow-xl">
+            <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-8 md:p-12 text-center border border-cyan-400/20 shadow-xl">
               <div className="text-6xl mb-4">👥</div>
               <p className="text-cyan-300 text-lg">No players added yet. Add your first player above!</p>
             </div>

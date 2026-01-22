@@ -88,11 +88,13 @@ export default function MatchDetailPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [strikerPlayerId, setStrikerPlayerId] = useState('');
+  const [nonStrikerPlayerId, setNonStrikerPlayerId] = useState('');
   const [bowlerId, setBowlerId] = useState('');
   const [currentRuns, setCurrentRuns] = useState(0);
   const [ballAnimations, setBallAnimations] = useState<AnimatedBall[]>([]);
   const [lastBallTime, setLastBallTime] = useState(0);
   const [showWicketForm, setShowWicketForm] = useState(false);
+  const [showBowlerChangeForm, setShowBowlerChangeForm] = useState(false);
   const [wicketForm, setWicketForm] = useState({
     playerOutId: '',
     wicketType: 'BOWLED',
@@ -246,7 +248,36 @@ export default function MatchDetailPage() {
         // Refetch the entire match data to ensure all overs and balls are properly synced
         // This ensures smooth over transitions and accurate ball grouping
         setTimeout(() => {
-          fetchMatch();
+          fetchMatch().then(() => {
+            // After fetching, check if we need to swap striker/non-striker
+            const newBalls = match.innings[selectedInnings].totalBalls + 1;
+            const newOverNumber = Math.floor(newBalls / 6);
+            const previousOverNumber = Math.floor(innings.totalBalls / 6);
+            
+            // Check if this was the last ball of the over (6th ball)
+            const ballsInCurrentOver = innings.totalBalls % 6;
+            const isLastBallOfOver = ballsInCurrentOver === 5; // 6th ball is index 5
+            
+            // Determine if over completed
+            const overCompleted = newOverNumber > previousOverNumber;
+            
+            // During an over: If 1 run taken AND NOT on the last ball, they swap
+            if (currentRuns === 1 && !isLastBallOfOver) {
+              setStrikerPlayerId(nonStrikerPlayerId);
+              setNonStrikerPlayerId(strikerPlayerId);
+            }
+            
+            // At end of over: Swap UNLESS the last ball had 1 run
+            if (overCompleted && !(currentRuns === 1)) {
+              setStrikerPlayerId(nonStrikerPlayerId);
+              setNonStrikerPlayerId(strikerPlayerId);
+            }
+            
+            // Show bowler change popup when over completes
+            if (overCompleted) {
+              setShowBowlerChangeForm(true);
+            }
+          });
         }, 300);
         
         setCurrentRuns(0);
@@ -622,31 +653,27 @@ export default function MatchDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      {/* Premium Dark Header */}
-      <header className="sticky top-0 z-50 bg-linear-to-r from-blue-600 to-blue-700 text-white shadow-2xl border-b border-blue-500">
-        <div className="max-w-6xl mx-auto px-6 py-6">
-          <Link href="/" className="text-blue-100 hover:text-white mb-3 inline-block text-sm font-medium transition">
-            ← Back to Matches
-          </Link>
-          <h1 className="text-3xl font-bold">
-            🏏 {match?.teamA?.name || 'Team A'} vs {match?.teamB?.name || 'Team B'}
-          </h1>
-          <p className="text-blue-100 mt-1">Live Match Scoring</p>
+    <div className="min-h-screen bg-linear-to-br from-slate-950 via-blue-950 to-slate-900">
+      {/* Modern Navbar */}
+      <nav className="sticky top-0 z-50 bg-linear-to-r from-blue-600 via-cyan-500 to-teal-500 text-white shadow-2xl px-3 py-3 sm:px-4 sm:py-4">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
+          <Link href="/matches" className="hover:opacity-80 transition text-sm md:text-base font-semibold">← Back</Link>
+          <h1 className="text-sm md:text-lg font-bold truncate text-center flex-1 mx-2">🏏 {match?.teamA?.name} vs {match?.teamB?.name}</h1>
+          <div className="w-12 md:w-16"></div>
         </div>
-      </header>
+      </nav>
 
-      <main className="px-4 py-6 max-w-2xl mx-auto">
+      <main className="px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6 max-w-3xl mx-auto">
         {error && (
-          <div className="bg-red-900/30 text-red-200 p-3 rounded-lg mb-4 border border-red-700/50 text-sm">
+          <div className="bg-red-900/30 text-red-200 p-3 sm:p-4 rounded-lg mb-4 border border-red-700/50 text-xs sm:text-sm">
             ⚠️ {error}
           </div>
         )}
 
         {!match ? (
-          <div className="text-center text-gray-400">Match not found</div>
+          <div className="text-center text-gray-400 py-12">⏳ Loading match data...</div>
         ) : matchComplete ? (
-          <div className="relative overflow-hidden bg-slate-900/80 rounded-2xl shadow-2xl p-6 border border-slate-700">
+          <div className="relative overflow-hidden bg-linear-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl p-6 md:p-8 border border-cyan-400/20">
             {/* Firecracker/confetti layers */}
             <div className="absolute inset-0 pointer-events-none mix-blend-screen opacity-70 animate-pulse" style={{ background: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.15), transparent 25%), radial-gradient(circle at 80% 30%, rgba(255,0,128,0.15), transparent 30%), radial-gradient(circle at 40% 70%, rgba(0,200,255,0.15), transparent 25%), radial-gradient(circle at 70% 80%, rgba(255,200,0,0.15), transparent 20%)' }} />
             <div className="absolute inset-0 pointer-events-none animate-[spin_22s_linear_infinite]" style={{ background: 'conic-gradient(from 0deg, rgba(255,0,128,0.12), rgba(0,200,255,0.12), rgba(0,255,128,0.12), rgba(255,200,0,0.12), rgba(255,0,128,0.12))' }} />
@@ -723,21 +750,21 @@ export default function MatchDetailPage() {
             </div>
           </div>
         ) : match.innings.length === 0 ? (
-          <div className="bg-linear-to-br from-slate-900 to-slate-800 rounded-xl shadow-2xl p-8 text-center border border-slate-700">
-            <h2 className="text-3xl font-bold text-white mb-2">🎯 Start Innings</h2>
-            <p className="text-gray-400 mb-6 text-sm">Select which team will bat first</p>
+          <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl p-6 md:p-8 text-center border border-cyan-400/20">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">🎯 Start Innings</h2>
+            <p className="text-gray-300 mb-6 text-xs md:text-sm">Select which team will bat first</p>
             <div className="space-y-3">
               <button
                 onClick={() => startInnings(match.teamA.id)}
                 disabled={isSaving}
-                className="w-full py-4 px-6 bg-linear-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold text-base transition"
+                className="w-full py-3 md:py-4 px-4 md:px-6 bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-xl font-bold text-sm md:text-base transition shadow-lg"
               >
                 {isSaving ? '⏳ Starting...' : `▶ ${match.teamA.name} Innings`}
               </button>
               <button
                 onClick={() => startInnings(match.teamB.id)}
                 disabled={isSaving}
-                className="w-full py-4 px-6 bg-linear-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold text-base transition"
+                className="w-full py-3 md:py-4 px-4 md:px-6 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-xl font-bold text-sm md:text-base transition shadow-lg"
               >
                 {isSaving ? '⏳ Starting...' : `▶ ${match.teamB.name} Innings`}
               </button>
@@ -748,15 +775,15 @@ export default function MatchDetailPage() {
             {match.innings[selectedInnings] && (
               <>
                 {/* BROADCAST-STYLE SCOREBOARD */}
-                <div className="bg-linear-to-r from-red-600 via-slate-900 to-slate-900 text-white rounded-lg shadow-2xl p-4 mb-6 border border-red-600/50 font-mono text-xs">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="bg-linear-to-r from-red-600 to-red-700 text-white rounded-xl shadow-2xl p-4 md:p-5 mb-6 border border-red-500/50 font-mono text-xs md:text-sm">
+                  <div className="flex items-center justify-between gap-2 md:gap-4 flex-wrap">
                     {/* Runs & Balls */}
-                    <div className="font-bold text-lg">
+                    <div className="font-bold text-lg md:text-2xl bg-slate-900/40 px-3 py-2 rounded-lg">
                       {match.innings[selectedInnings].totalRuns}D-{Math.floor(match.innings[selectedInnings].totalBalls / 6)}.{match.innings[selectedInnings].totalBalls % 6}
                     </div>
                     
                     {/* Over Display */}
-                    <div className="font-bold text-sm">
+                    <div className="font-bold text-sm md:text-base bg-slate-900/40 px-3 py-2 rounded-lg">
                       {Math.floor(match.innings[selectedInnings].totalBalls / 6)}.{match.innings[selectedInnings].totalBalls % 6}
                     </div>
 
@@ -768,7 +795,7 @@ export default function MatchDetailPage() {
                       const allOut = outPlayers.length >= batingTeam.players.length - 1;
                       
                       return (
-                        <div className={`${allOut ? 'bg-red-600' : 'bg-green-500'} text-slate-900 px-2 py-1 rounded font-bold text-xs`}>
+                        <div className={`${allOut ? 'bg-red-600' : 'bg-green-500'} text-slate-900 px-3 py-1 rounded-lg font-bold text-xs md:text-sm`}>
                           {allOut ? 'ALL OUT' : 'LIVE'}
                         </div>
                       );
@@ -789,13 +816,13 @@ export default function MatchDetailPage() {
                   if (!nextInningsAvailable) return null;
 
                   return (
-                    <div className="bg-slate-900 rounded-lg p-4 mb-4 border border-slate-700">
-                      <p className="text-white text-sm font-bold mb-2">All batsmen out</p>
-                      <p className="text-gray-300 text-xs mb-3">Start {fieldingTeam.name} innings now.</p>
+                    <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl p-4 md:p-5 mb-4 border border-yellow-400/30 shadow-lg">
+                      <p className="text-yellow-300 text-sm md:text-base font-bold mb-2">⚠️ All batsmen out</p>
+                      <p className="text-gray-300 text-xs md:text-sm mb-3">Start {fieldingTeam.name} innings now.</p>
                       <button
                         onClick={() => startInnings(fieldingTeam.id)}
                         disabled={isSaving}
-                        className="w-full py-3 px-4 bg-linear-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold text-sm transition"
+                        className="w-full py-3 md:py-4 px-4 md:px-6 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-xl font-bold text-sm md:text-base transition shadow-lg"
                       >
                         {isSaving ? '⏳ Starting...' : `▶ Start ${fieldingTeam.name} Innings`}
                       </button>
@@ -804,20 +831,25 @@ export default function MatchDetailPage() {
                 })()}
 
                 {/* Player Selection */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <select
-                    value={strikerPlayerId}
-                    onChange={(e) => setStrikerPlayerId(e.target.value)}
-                    className="px-3 py-2 bg-slate-800 border border-slate-600 text-white rounded-lg focus:outline-none focus:border-blue-500 text-sm"
-                  >
-                    <option value="">⚾ Striker</option>
+                <div className="mb-4">
+                  <p className="text-white text-xs md:text-sm font-bold mb-3">🏏 Batsman & Bowler</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <p className="text-gray-300 text-xs mb-1">Striker</p>
+                      <select
+                        value={strikerPlayerId}
+                        onChange={(e) => setStrikerPlayerId(e.target.value)}
+                        className="w-full px-3 py-2 md:py-3 bg-slate-800 border border-cyan-400/40 text-white rounded-lg focus:outline-none focus:border-cyan-300 focus:ring-1 focus:ring-cyan-400/50 text-xs md:text-sm hover:border-cyan-400/60 transition"
+                      >
+                        <option value="">🏏 Striker</option>
                     {match.innings[selectedInnings].teamId && match.teamA.id === match.innings[selectedInnings].teamId
                       ? match.teamA.players.map((p) => {
                           // Check if this player has been given out
                           const isOut = (match.innings[selectedInnings].wickets || []).some(
                             (w: any) => w.playerOutId === p.id
                           );
-                          if (isOut) return null; // Don't show out players
+                          // Don't show out players or the non-striker
+                          if (isOut || p.id === nonStrikerPlayerId) return null;
                           return (
                             <option key={p.id} value={p.id}>{p.name}</option>
                           );
@@ -827,28 +859,68 @@ export default function MatchDetailPage() {
                           const isOut = (match.innings[selectedInnings].wickets || []).some(
                             (w: any) => w.playerOutId === p.id
                           );
-                          if (isOut) return null; // Don't show out players
+                          // Don't show out players or the non-striker
+                          if (isOut || p.id === nonStrikerPlayerId) return null;
                           return (
                             <option key={p.id} value={p.id}>{p.name}</option>
                           );
                         })
                     }
                   </select>
-                  <select
-                    value={bowlerId}
-                    onChange={(e) => setBowlerId(e.target.value)}
-                    className="px-3 py-2 bg-slate-800 border border-slate-600 text-white rounded-lg focus:outline-none focus:border-green-500 text-sm"
-                  >
-                    <option value="">🎯 Bowler</option>
+                    </div>
+                    <div>
+                      <p className="text-gray-300 text-xs mb-1">Non-Striker</p>
+                      <select
+                        value={nonStrikerPlayerId}
+                        onChange={(e) => setNonStrikerPlayerId(e.target.value)}
+                        className="w-full px-3 py-2 md:py-3 bg-slate-800 border border-blue-400/40 text-white rounded-lg focus:outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-400/50 text-xs md:text-sm hover:border-blue-400/60 transition"
+                      >
+                        <option value="">👥 Non-Striker</option>
                     {match.innings[selectedInnings].teamId && match.teamA.id === match.innings[selectedInnings].teamId
-                      ? match.teamB.players.map((p) => (
-                          <option key={p.id} value={p.id}>{p.name}</option>
-                        ))
-                      : match.teamA.players.map((p) => (
-                          <option key={p.id} value={p.id}>{p.name}</option>
-                        ))
+                      ? match.teamA.players.map((p) => {
+                          // Check if this player has been given out
+                          const isOut = (match.innings[selectedInnings].wickets || []).some(
+                            (w: any) => w.playerOutId === p.id
+                          );
+                          // Don't show out players or the striker
+                          if (isOut || p.id === strikerPlayerId) return null;
+                          return (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                          );
+                        })
+                      : match.teamB.players.map((p) => {
+                          // Check if this player has been given out
+                          const isOut = (match.innings[selectedInnings].wickets || []).some(
+                            (w: any) => w.playerOutId === p.id
+                          );
+                          // Don't show out players or the striker
+                          if (isOut || p.id === strikerPlayerId) return null;
+                          return (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                          );
+                        })
                     }
                   </select>
+                    </div>
+                    <div>
+                      <p className="text-gray-300 text-xs mb-1">Bowler</p>
+                      <select
+                        value={bowlerId}
+                        onChange={(e) => setBowlerId(e.target.value)}
+                        className="w-full px-3 py-2 md:py-3 bg-slate-800 border border-emerald-400/40 text-white rounded-lg focus:outline-none focus:border-emerald-300 focus:ring-1 focus:ring-emerald-400/50 text-xs md:text-sm hover:border-emerald-400/60 transition"
+                      >
+                        <option value="">⚾ Bowler</option>
+                        {match.innings[selectedInnings].teamId && match.teamA.id === match.innings[selectedInnings].teamId
+                          ? match.teamB.players.map((p) => (
+                              <option key={p.id} value={p.id}>{p.name}</option>
+                            ))
+                          : match.teamA.players.map((p) => (
+                              <option key={p.id} value={p.id}>{p.name}</option>
+                            ))
+                        }
+                      </select>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Large Runs Display - Clickable to Complete Ball */}
@@ -862,27 +934,27 @@ export default function MatchDetailPage() {
                       <button
                         onClick={handleCompleteBall}
                         disabled={isSaving || isOverLimitReached}
-                        className="w-full bg-linear-to-br from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-xl p-8 mb-4 text-center shadow-2xl transition transform hover:scale-105 active:scale-95 disabled:opacity-50"
+                        className="w-full bg-linear-to-br from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-2xl p-6 md:p-8 mb-4 text-center shadow-2xl border border-cyan-400/20 transition transform hover:scale-105 active:scale-95 disabled:opacity-50 active:shadow-lg"
                       >
-                        <p className="text-xs font-semibold mb-2 opacity-90">TAP TO COMPLETE BALL</p>
-                        <h3 className="text-7xl font-bold">{currentRuns}</h3>
+                        <p className="text-xs md:text-sm font-semibold mb-2 opacity-90">TAP TO COMPLETE BALL</p>
+                        <h3 className="text-6xl md:text-7xl font-bold">{currentRuns}</h3>
                       </button>
                       {isOverLimitReached && (
                         <div className="text-center mb-4">
-                          <p className="text-red-500 font-bold mb-3">
+                          <p className="text-red-400 font-bold mb-3 text-sm md:text-base">
                             ⚠️ Over limit ({match.oversLimit} overs) reached!
                           </p>
                           {match.innings[selectedInnings]?.teamId === match.teamA.id && match.innings.length === 1 && (
                             <button
                               onClick={() => startInnings(match.teamB.id)}
                               disabled={isSaving}
-                              className="w-full py-3 px-4 bg-linear-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold text-base transition"
+                              className="w-full py-3 md:py-4 px-4 md:px-6 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-xl font-bold text-sm md:text-base transition shadow-lg"
                             >
                               {isSaving ? '⏳ Starting...' : `▶ Start ${match.teamB.name} Innings`}
                             </button>
                           )}
                           {match.innings[selectedInnings]?.teamId === match.teamB.id && match.innings.length === 2 && (
-                            <p className="text-yellow-400 font-semibold">✅ Match Complete!</p>
+                            <p className="text-yellow-400 font-semibold text-sm md:text-base">✅ Match Complete!</p>
                           )}
                         </div>
                       )}
@@ -890,15 +962,21 @@ export default function MatchDetailPage() {
                   );
                 })()}
 
-                {/* Scoring Buttons - Minimal */}
-                <div className="grid grid-cols-3 gap-2 mb-4">
-                  {[0, 1, 2].map((runs) => (
+                {/* Scoring Buttons - 0, 1, 2, 4, 6 */}
+                <div className="grid grid-cols-5 gap-2 mb-4">
+                  {[
+                    { runs: 0, gradient: 'from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-blue-400/20', label: '0' },
+                    { runs: 1, gradient: 'from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-blue-400/20', label: '1' },
+                    { runs: 2, gradient: 'from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-blue-400/20', label: '2' },
+                    { runs: 4, gradient: 'from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 border-slate-300/30', label: '4' },
+                    { runs: 6, gradient: 'from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 border-amber-300/30', label: '6' },
+                  ].map((btn) => (
                     <button
-                      key={runs}
-                      onClick={() => handleAddRuns(runs)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 rounded-lg text-3xl transition"
+                      key={btn.runs}
+                      onClick={() => handleAddRuns(btn.runs)}
+                      className={`bg-linear-to-br ${btn.gradient} text-white font-bold py-3 md:py-5 rounded-xl text-sm md:text-xl transition shadow-lg border`}
                     >
-                      {runs}
+                      {btn.label}
                     </button>
                   ))}
                 </div>
@@ -907,7 +985,7 @@ export default function MatchDetailPage() {
                 <div className="mb-4">
                   <button
                     onClick={() => handleAddRuns(-1)}
-                    className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-lg transition text-sm"
+                    className="w-full bg-linear-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-3 md:py-4 rounded-xl transition text-sm md:text-base shadow-lg border border-red-400/20"
                   >
                     ➖ Undo
                   </button>
@@ -918,28 +996,28 @@ export default function MatchDetailPage() {
                   <button
                     onClick={() => handleRecordExtra('WIDE')}
                     disabled={isSaving}
-                    className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-slate-600 text-white font-bold py-3 rounded-lg text-xs transition"
+                    className="bg-linear-to-br from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-lg text-xs md:text-sm transition shadow-lg"
                   >
                     Wide
                   </button>
                   <button
                     onClick={() => handleRecordExtra('NO_BALL')}
                     disabled={isSaving}
-                    className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-slate-600 text-white font-bold py-3 rounded-lg text-xs transition"
+                    className="bg-linear-to-br from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-lg text-xs md:text-sm transition shadow-lg"
                   >
                     No Ball
                   </button>
                   <button
                     onClick={() => handleRecordExtra('BYE')}
                     disabled={isSaving}
-                    className="bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-600 text-white font-bold py-3 rounded-lg text-xs transition"
+                    className="bg-linear-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-lg text-xs md:text-sm transition shadow-lg"
                   >
                     Bye
                   </button>
                   <button
                     onClick={() => handleRecordExtra('LEG_BYE')}
                     disabled={isSaving}
-                    className="bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-600 text-white font-bold py-3 rounded-lg text-xs transition"
+                    className="bg-linear-to-br from-pink-600 to-pink-700 hover:from-pink-700 hover:to-pink-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-lg text-xs md:text-sm transition shadow-lg"
                   >
                     Leg Bye
                   </button>
@@ -952,21 +1030,21 @@ export default function MatchDetailPage() {
                     setWicketForm({ playerOutId: strikerPlayerId, wicketType: 'BOWLED', fielderId: '' });
                   }}
                   disabled={isSaving || !bowlerId}
-                  className="w-full bg-red-700 hover:bg-red-800 disabled:bg-slate-600 text-white font-bold py-3 rounded-lg text-sm mb-4 transition"
+                  className="w-full bg-linear-to-br from-red-700 to-red-800 hover:from-red-800 hover:to-red-900 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-xl text-sm md:text-base mb-4 transition shadow-lg border border-red-400/20"
                 >
                   🎯 Wicket
                 </button>
 
                 {/* Wicket Form Modal */}
                 {showWicketForm && match.innings[selectedInnings] && (
-                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-900 rounded-lg p-6 border border-red-600 max-w-md w-full">
-                      <h3 className="text-white text-lg font-bold mb-4">Record Wicket</h3>
+                  <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-3 md:p-4">
+                    <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-2xl p-6 border border-red-400/40 max-w-md w-full shadow-2xl">
+                      <h3 className="text-white text-lg md:text-xl font-bold mb-4">🎯 Record Wicket</h3>
                       
                       {/* Player Out - Auto-filled with current striker */}
                       <div className="mb-4">
-                        <label className="text-white text-sm font-bold mb-2 block">Player Out</label>
-                        <div className="w-full bg-slate-800 text-white rounded p-2 border border-slate-700">
+                        <label className="text-white text-xs md:text-sm font-bold mb-2 block">Player Out</label>
+                        <div className="w-full bg-slate-700 text-white rounded-lg p-3 border border-slate-600">
                           {strikerPlayerId ? (
                             <>
                               {match.teamA.id === match.innings[selectedInnings].teamId
@@ -980,18 +1058,18 @@ export default function MatchDetailPage() {
                               />
                             </>
                           ) : (
-                            <span className="text-gray-400">Select striker first</span>
+                            <span className="text-gray-400 text-sm">Select striker first</span>
                           )}
                         </div>
                       </div>
 
                       {/* Wicket Type Selection */}
                       <div className="mb-4">
-                        <label className="text-white text-sm font-bold mb-2 block">Wicket Type</label>
+                        <label className="text-white text-xs md:text-sm font-bold mb-2 block">Wicket Type</label>
                         <select
                           value={wicketForm.wicketType}
                           onChange={(e) => setWicketForm({ ...wicketForm, wicketType: e.target.value })}
-                          className="w-full bg-slate-800 text-white rounded p-2 border border-slate-700"
+                          className="w-full bg-slate-700 text-white rounded-lg p-3 border border-slate-600 focus:outline-none focus:border-red-400 text-xs md:text-sm"
                         >
                           <option value="BOWLED">Bowled</option>
                           <option value="LBW">LBW</option>
@@ -1006,11 +1084,11 @@ export default function MatchDetailPage() {
                       {/* Fielder Selection (for caught/run out) */}
                       {['CAUGHT', 'STUMPED', 'RUN_OUT'].includes(wicketForm.wicketType) && (
                         <div className="mb-4">
-                          <label className="text-white text-sm font-bold mb-2 block">Fielder</label>
+                          <label className="text-white text-xs md:text-sm font-bold mb-2 block">Fielder</label>
                           <select
                             value={wicketForm.fielderId}
                             onChange={(e) => setWicketForm({ ...wicketForm, fielderId: e.target.value })}
-                            className="w-full bg-slate-800 text-white rounded p-2 border border-slate-700"
+                            className="w-full bg-slate-700 text-white rounded-lg p-3 border border-slate-600 focus:outline-none focus:border-red-400 text-xs md:text-sm"
                           >
                             <option value="">Select fielder</option>
                             {match.innings[selectedInnings].teamId && match.teamB.id === match.innings[selectedInnings].teamId
@@ -1030,11 +1108,11 @@ export default function MatchDetailPage() {
                       )}
 
                       {/* Buttons */}
-                      <div className="flex gap-2">
+                      <div className="flex gap-3">
                         <button
                           onClick={handleRecordWicket}
                           disabled={isSaving || !wicketForm.playerOutId}
-                          className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-slate-600 text-white font-bold py-2 rounded transition"
+                          className="flex-1 bg-linear-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 rounded-lg transition text-sm md:text-base shadow-lg"
                         >
                           Record Wicket
                         </button>
@@ -1044,7 +1122,7 @@ export default function MatchDetailPage() {
                             setWicketForm({ playerOutId: '', wicketType: 'BOWLED', fielderId: '' });
                           }}
                           disabled={isSaving}
-                          className="flex-1 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-600 text-white font-bold py-2 rounded transition"
+                          className="flex-1 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-600 text-white font-bold py-3 rounded-lg transition text-sm md:text-base shadow-lg"
                         >
                           Cancel
                         </button>
@@ -1053,10 +1131,55 @@ export default function MatchDetailPage() {
                   </div>
                 )}
 
+                {/* Bowler Change Popup - When Over Ends */}
+                {showBowlerChangeForm && match.innings[selectedInnings] && (
+                  <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-3 md:p-4">
+                    <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-2xl p-6 border border-amber-400/40 max-w-md w-full shadow-2xl">
+                      <h3 className="text-white text-lg md:text-xl font-bold mb-2">✅ Over Completed!</h3>
+                      <p className="text-gray-300 text-sm md:text-base mb-4">Select the next bowler to start the new over</p>
+                      
+                      <div className="mb-4">
+                        <label className="text-white text-xs md:text-sm font-bold mb-2 block">⚾ New Bowler</label>
+                        <select
+                          value={bowlerId}
+                          onChange={(e) => setBowlerId(e.target.value)}
+                          className="w-full bg-slate-700 text-white rounded-lg p-3 border border-emerald-400/40 focus:outline-none focus:border-emerald-300 text-xs md:text-sm"
+                        >
+                          <option value="">Select bowler</option>
+                          {match.innings[selectedInnings].teamId && match.teamA.id === match.innings[selectedInnings].teamId
+                            ? match.teamB.players.map((p) => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                              ))
+                            : match.teamA.players.map((p) => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                              ))
+                          }
+                        </select>
+                      </div>
+
+                      {/* Buttons */}
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => {
+                            if (bowlerId) {
+                              setShowBowlerChangeForm(false);
+                            } else {
+                              setError('Please select a bowler');
+                            }
+                          }}
+                          className="flex-1 bg-linear-to-br from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold py-3 rounded-lg transition text-sm md:text-base shadow-lg"
+                        >
+                          Continue
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Last Balls - Over Wise Display */}
                 {match.innings && match.innings[selectedInnings] && match.innings[selectedInnings].balls && match.innings[selectedInnings].balls.length > 0 ? (
-                  <div className="bg-slate-900 rounded-lg p-4 mb-4 border border-slate-700">
-                    <p className="text-white text-xs font-bold mb-3">Last Balls (Over Wise)</p>
+                  <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl p-4 md:p-5 mb-4 border border-cyan-400/20 shadow-lg">
+                    <p className="text-white text-xs md:text-sm font-bold mb-3">📊 Last Balls (Over Wise)</p>
                     <div className="space-y-2">
                       {(() => {
                         // Group balls by over - only count legal balls for over number
@@ -1160,7 +1283,7 @@ export default function MatchDetailPage() {
                           .map(Number)
                           .sort((a, b) => a - b)
                           .map((overNum) => (
-                            <div key={overNum} className="bg-slate-800 rounded p-2">
+                            <div key={overNum} className="bg-slate-800/60 rounded-lg p-3 border border-cyan-400/10">
                               <p className="text-cyan-400 text-xs font-bold mb-2">Over {overNum}</p>
                               <div className="flex gap-1 flex-wrap">
                                 {ballsByOver[overNum].map((delivery: any, didx: number) => {
@@ -1214,7 +1337,7 @@ export default function MatchDetailPage() {
                                   return (
                                     <div
                                       key={didx}
-                                      className={`w-10 h-10 rounded-full ${bgColor} flex items-center justify-center text-white font-bold text-xs shadow-md hover:opacity-80 transition`}
+                                      className={`w-10 h-10 rounded-full ${bgColor} flex items-center justify-center text-white font-bold text-xs md:text-sm shadow-md hover:opacity-80 transition border border-white/20`}
                                       title={tooltip}
                                     >
                                       {displayValue}
@@ -1228,8 +1351,8 @@ export default function MatchDetailPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-slate-900 rounded-lg p-4 mb-4 border border-slate-700 text-center">
-                    <p className="text-gray-400 text-xs">No balls recorded yet</p>
+                  <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl p-4 md:p-5 mb-4 border border-slate-700/50 text-center shadow-lg">
+                    <p className="text-gray-400 text-xs md:text-sm">📭 No balls recorded yet</p>
                   </div>
                 )}
               </>
