@@ -20,6 +20,9 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true);
   const [liveMatches, setLiveMatches] = useState<Match[]>([]);
   const [previousMatches, setPreviousMatches] = useState<Match[]>([]);
+  const [totalPreviousMatches, setTotalPreviousMatches] = useState(0);
+  const [liveMatchesPage, setLiveMatchesPage] = useState(0);
+  const matchesPerPage = 2;
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -57,8 +60,9 @@ export default function LandingPage() {
           console.log('Live matches:', live); // Debug log
           console.log('Previous matches:', previous); // Debug log
           
-          setLiveMatches(live.slice(0, 2)); // Show first 2 live matches
-          setPreviousMatches(previous.slice(0, 3)); // Show first 3 previous matches
+          setLiveMatches(live); // Show all live matches with pagination
+          setTotalPreviousMatches(previous.length); // Store total count
+          setPreviousMatches(previous.slice(0, 5)); // Show first 5 previous matches
         }
       } catch (error) {
         console.error('Failed to fetch matches:', error);
@@ -115,42 +119,69 @@ export default function LandingPage() {
         <section className="mb-20">
           <h2 className="text-4xl font-black mb-8 text-white">🔴 Live Matches</h2>
           {liveMatches.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {liveMatches.map((match) => (
-                <div key={match._id} className="relative overflow-hidden rounded-xl border border-green-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-6 group hover:border-green-400/80 transition-all">
-                  <div className="absolute top-0 right-0 px-3 py-1 bg-linear-to-r from-green-600 to-emerald-600 rounded-bl-lg text-xs font-bold">
-                    LIVE
-                  </div>
-                  <div className="relative z-10">
-                    <div className="mb-4">
-                      <h3 className="text-2xl font-bold text-white mb-2">{match.teamA.name} vs {match.teamB.name}</h3>
-                      <p className="text-sm text-slate-400">{match.matchType} • {match.venue}</p>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {liveMatches.slice(liveMatchesPage * matchesPerPage, (liveMatchesPage + 1) * matchesPerPage).map((match) => (
+                  <div key={match._id} className="relative overflow-hidden rounded-xl border border-green-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-6 group hover:border-green-400/80 transition-all">
+                    <div className="absolute top-0 right-0 px-3 py-1 bg-linear-to-r from-green-600 to-emerald-600 rounded-bl-lg text-xs font-bold">
+                      LIVE
                     </div>
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div className="bg-slate-800/50 rounded-lg p-3">
-                        <p className="text-xs text-slate-400 mb-1">{match.teamA.name}</p>
-                        <p className="text-3xl font-bold text-cyan-400">
-                          {match.innings[0]?.totalRuns || 0}
-                          {match.innings[0]?.wickets?.length > 0 ? `/${match.innings[0].wickets.length}` : ''}
-                        </p>
-                        <p className="text-xs text-slate-400">in {Math.floor(match.innings[0]?.totalBalls / 6)}.{match.innings[0]?.totalBalls % 6} overs</p>
+                    <div className="relative z-10">
+                      <div className="mb-4">
+                        <h3 className="text-2xl font-bold text-white mb-2">{match.teamA.name} vs {match.teamB.name}</h3>
+                        <p className="text-sm text-slate-400">{match.matchType} • {match.venue}</p>
                       </div>
-                      <div className="bg-slate-800/50 rounded-lg p-3">
-                        <p className="text-xs text-slate-400 mb-1">{match.teamB.name}</p>
-                        <p className="text-3xl font-bold text-blue-400">
-                          {match.innings[1]?.totalRuns || 0}
-                          {match.innings[1]?.wickets?.length > 0 ? `/${match.innings[1].wickets.length}` : ''}
-                        </p>
-                        <p className="text-xs text-slate-400">in {Math.floor(match.innings[1]?.totalBalls / 6)}.{match.innings[1]?.totalBalls % 6} overs</p>
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="bg-slate-800/50 rounded-lg p-3">
+                          <p className="text-xs text-slate-400 mb-1">{match.teamA.name}</p>
+                          <p className="text-3xl font-bold text-cyan-400">
+                            {match.innings[0]?.totalRuns || 0}
+                            {match.innings[0]?.wickets?.length > 0 ? `/${match.innings[0].wickets.length}` : ''}
+                          </p>
+                          <p className="text-xs text-slate-400">in {Math.floor(match.innings[0]?.totalBalls / 6)}.{match.innings[0]?.totalBalls % 6} overs</p>
+                        </div>
+                        <div className="bg-slate-800/50 rounded-lg p-3">
+                          <p className="text-xs text-slate-400 mb-1">{match.teamB.name}</p>
+                          <p className="text-3xl font-bold text-blue-400">
+                            {match.innings[1]?.totalRuns || 0}
+                            {match.innings[1]?.wickets?.length > 0 ? `/${match.innings[1].wickets.length}` : ''}
+                          </p>
+                          <p className="text-xs text-slate-400">in {Math.floor(match.innings[1]?.totalBalls / 6)}.{match.innings[1]?.totalBalls % 6} overs</p>
+                        </div>
                       </div>
+                      <Link href={`/matches/${match._id}/live-score`} className="w-full py-2 px-4 bg-linear-to-r from-green-600 to-emerald-600 text-white rounded-lg font-semibold text-sm hover:from-green-500 hover:to-emerald-500 transition">
+                        View Live Score →
+                      </Link>
                     </div>
-                    <Link href={`/matches/${match._id}/live-score`} className="w-full py-2 px-4 bg-linear-to-r from-green-600 to-emerald-600 text-white rounded-lg font-semibold text-sm hover:from-green-500 hover:to-emerald-500 transition">
-                      View Live Score →
-                    </Link>
                   </div>
+                ))}
+              </div>
+
+              {/* Pagination Controls */}
+              {liveMatches.length > matchesPerPage && (
+                <div className="flex items-center justify-center gap-4 mt-8">
+                  <button
+                    onClick={() => setLiveMatchesPage(prev => Math.max(0, prev - 1))}
+                    disabled={liveMatchesPage === 0}
+                    className="px-4 py-2 bg-slate-800 border border-slate-700 text-white rounded-lg font-semibold hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  >
+                    ← Previous
+                  </button>
+                  
+                  <span className="text-slate-400 font-semibold">
+                    {liveMatchesPage + 1} of {Math.ceil(liveMatches.length / matchesPerPage)}
+                  </span>
+                  
+                  <button
+                    onClick={() => setLiveMatchesPage(prev => Math.min(Math.ceil(liveMatches.length / matchesPerPage) - 1, prev + 1))}
+                    disabled={liveMatchesPage >= Math.ceil(liveMatches.length / matchesPerPage) - 1}
+                    className="px-4 py-2 bg-slate-800 border border-slate-700 text-white rounded-lg font-semibold hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  >
+                    Next →
+                  </button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-12 bg-slate-800/30 rounded-xl border border-slate-700">
               <p className="text-slate-400">No live matches at the moment</p>
@@ -162,35 +193,49 @@ export default function LandingPage() {
         <section>
           <h2 className="text-4xl font-black mb-8 text-white">📊 Previous Matches</h2>
           {previousMatches.length > 0 ? (
-            <div className="space-y-4">
-              {previousMatches.map((match) => (
-                <div key={match._id} className="relative overflow-hidden rounded-xl border border-slate-700 bg-linear-to-br from-slate-900/80 to-slate-800/50 p-6 hover:border-blue-500/50 transition-all cursor-pointer" onClick={() => router.push(`/matches/${match._id}/live-score`)}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-center">
-                    <div>
-                      <h4 className="text-lg font-bold text-white mb-1">{match.teamA.name} vs {match.teamB.name}</h4>
-                      <p className="text-xs text-slate-400">{match.matchType} • {new Date(match.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-cyan-400">{match.innings[0]?.totalRuns || 0}</p>
-                      <p className="text-xs text-slate-400">{match.teamA.name} Innings</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-blue-400">{match.innings[1]?.totalRuns || 0}</p>
-                      <p className="text-xs text-slate-400">{match.teamB.name} Innings</p>
-                    </div>
-                    <div>
-                      <span className={`px-3 py-1 rounded-lg text-sm font-semibold ${
-                        match.innings[0]?.totalRuns > match.innings[1]?.totalRuns
-                          ? 'bg-green-600/20 border border-green-500/50 text-green-300'
-                          : 'bg-blue-600/20 border border-blue-500/50 text-blue-300'
-                      }`}>
-                        {match.innings[0]?.totalRuns > match.innings[1]?.totalRuns ? `${match.teamA.name} Won` : `${match.teamB.name} Won`}
-                      </span>
+            <>
+              <div className="space-y-4">
+                {previousMatches.map((match) => (
+                  <div key={match._id} className="relative overflow-hidden rounded-xl border border-slate-700 bg-linear-to-br from-slate-900/80 to-slate-800/50 p-6 hover:border-blue-500/50 transition-all cursor-pointer" onClick={() => router.push(`/matches/${match._id}/live-score`)}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-center">
+                      <div>
+                        <h4 className="text-lg font-bold text-white mb-1">{match.teamA.name} vs {match.teamB.name}</h4>
+                        <p className="text-xs text-slate-400">{match.matchType} • {new Date(match.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-cyan-400">{match.innings[0]?.totalRuns || 0}</p>
+                        <p className="text-xs text-slate-400">{match.teamA.name} Innings</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-blue-400">{match.innings[1]?.totalRuns || 0}</p>
+                        <p className="text-xs text-slate-400">{match.teamB.name} Innings</p>
+                      </div>
+                      <div>
+                        <span className={`px-3 py-1 rounded-lg text-sm font-semibold ${
+                          match.innings[0]?.totalRuns > match.innings[1]?.totalRuns
+                            ? 'bg-green-600/20 border border-green-500/50 text-green-300'
+                            : 'bg-blue-600/20 border border-blue-500/50 text-blue-300'
+                        }`}>
+                          {match.innings[0]?.totalRuns > match.innings[1]?.totalRuns ? `${match.teamA.name} Won` : `${match.teamB.name} Won`}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                ))}
+              </div>
+
+              {/* View All Button */}
+              {totalPreviousMatches > 5 && (
+                <div className="mt-8 text-center">
+                  <button
+                    onClick={() => router.push('/matches')}
+                    className="px-8 py-3 bg-linear-to-r from-blue-600 to-cyan-600 text-white rounded-lg font-semibold hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50"
+                  >
+                    View All Previous Matches ({totalPreviousMatches}) →
+                  </button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-12 bg-slate-800/30 rounded-xl border border-slate-700">
               <p className="text-slate-400">No previous matches yet</p>
