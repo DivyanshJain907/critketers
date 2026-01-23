@@ -138,7 +138,7 @@ Visit `http://localhost:3000`
 - `POST /api/matches/[id]/innings/[inningsId]/wickets` - Record wicket
 - `POST /api/matches/[id]/innings/[inningsId]/extras` - Record extras
 
-## 📊 Statistics Features
+## 📊 Statistics Feature
 
 ### Player Statistics
 - Runs, balls faced, strike rate
