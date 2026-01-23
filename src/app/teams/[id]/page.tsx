@@ -184,17 +184,15 @@ export default function TeamDetailPage() {
       </div>
 
       {/* Header */}
-      <header className="z-50 border-b border-slate-800 backdrop-blur-md bg-slate-950/50 h-24 sticky top-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 flex justify-between items-center h-full">
-          <div className="flex items-center space-x-3">
-            <Link href="/teams" className="px-6 py-2.5 text-sm font-semibold text-white bg-linear-to-r from-blue-600 to-cyan-600 rounded-lg hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50">
-              ← Back
-            </Link>
-            <img src="/logo.png" alt="CricKeters" className="h-32 w-32 object-contain -my-4" />
-            <div>
-              <h1 className="text-2xl font-black bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">{team.name}</h1>
-              {team.shortCode && <p className="text-xs text-slate-400 font-semibold tracking-widest">Code: {team.shortCode}</p>}
-            </div>
+      <header className="z-50 border-b border-slate-800 backdrop-blur-md bg-slate-950/50 sticky top-0">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-0 flex justify-between items-center sm:h-24 gap-2 sm:gap-3">
+          <Link href="/teams" className="px-3 sm:px-6 py-3 sm:py-2.5 text-xs sm:text-sm font-semibold text-white bg-linear-to-r from-blue-600 to-cyan-600 rounded-lg hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50 whitespace-nowrap">
+            ← Back
+          </Link>
+          <img src="/logo.png" alt="CricKeters" className="h-16 w-16 sm:h-32 sm:w-32 object-contain sm:-my-4" />
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-black bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent truncate">{team.name}</h1>
+            {team.shortCode && <p className="text-xs text-slate-400 font-semibold tracking-widest">Code: {team.shortCode}</p>}
           </div>
         </div>
       </header>
@@ -203,11 +201,11 @@ export default function TeamDetailPage() {
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Add Player Form */}
         <section className="mb-12">
-          <div className="relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8">
-            <h2 className="text-3xl font-bold text-white mb-8">➕ Add New Player</h2>
+          <div className="relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-6 sm:p-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">➕ Add New Player</h2>
             <form onSubmit={handleAddPlayer} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="md:col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="sm:col-span-2">
                   <label className="block text-sm font-bold text-cyan-300 mb-3">Player Name</label>
                   <input
                     type="text"
@@ -248,28 +246,28 @@ export default function TeamDetailPage() {
 
         {/* Players List */}
         <section className="mb-12">
-          <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8 flex items-center gap-3">
             <span className="text-cyan-400">👥</span> Squad Members
           </h2>
           {team.players && team.players.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {team.players.map((player) => (
                 <div
                   key={player.id}
-                  className="group relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-6 hover:shadow-lg hover:shadow-cyan-500/20 transition-all"
+                  className="group relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-5 sm:p-6 hover:shadow-lg hover:shadow-cyan-500/20 transition-all"
                 >
                   <div className="absolute inset-0 bg-linear-to-br from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="relative z-10">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-white">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base sm:text-xl font-bold text-white truncate">
                           {player.jerseyNo && <span className="text-cyan-400">#{player.jerseyNo} </span>}
                           {player.name}
                         </h3>
                       </div>
                       <button
                         onClick={() => handleDeletePlayer(player.id)}
-                        className="ml-2 p-2 rounded-lg transition-all bg-red-600/20 hover:bg-red-600/40 text-red-400 hover:text-red-300 font-bold"
+                        className="p-2 rounded-lg transition-all bg-red-600/20 hover:bg-red-600/40 text-red-400 hover:text-red-300 font-bold shrink-0"
                         title="Delete player"
                       >
                         ✕
@@ -280,9 +278,9 @@ export default function TeamDetailPage() {
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-12 text-center">
-              <div className="text-6xl mb-4">👥</div>
-              <p className="text-cyan-300 text-lg">No players added yet. Add your first player above!</p>
+            <div className="rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8 sm:p-12 text-center">
+              <div className="text-5xl sm:text-6xl mb-4">👥</div>
+              <p className="text-cyan-300 text-base sm:text-lg">No players added yet. Add your first player above!</p>
             </div>
           )}
         </section>

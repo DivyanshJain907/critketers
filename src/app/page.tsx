@@ -96,17 +96,17 @@ export default function LandingPage() {
       </div>
 
       {/* Header */}
-      <header className="relative z-50 border-b border-slate-800 backdrop-blur-md bg-slate-950/50 h-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 flex justify-between items-center h-full">
-          <div className="flex items-center space-x-3">
-            <img src="/logo.png" alt="CricKeters" className="h-32 w-32 object-contain -my-4" />
-            <div>
+      <header className="relative z-50 border-b border-slate-800 backdrop-blur-md bg-slate-950/50">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-0 flex justify-between items-center sm:h-24">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <img src="/logo.png" alt="CricKeters" className="h-20 w-20 sm:h-32 sm:w-32 object-contain sm:-my-4" />
+            <div className="hidden sm:block">
               <h1 className="text-2xl font-black bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">CricKeters</h1>
               <p className="text-xs text-slate-400 font-semibold tracking-widest">LIVE MATCH SCORES</p>
             </div>
           </div>
-          <nav className="flex items-center space-x-6">
-            <Link href="/login" className="px-6 py-2.5 text-sm font-semibold text-white bg-linear-to-r from-blue-600 to-cyan-600 rounded-lg hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50">
+          <nav className="flex items-center">
+            <Link href="/login" className="px-3 sm:px-6 py-3 sm:py-2.5 text-xs sm:text-sm font-semibold text-white bg-linear-to-r from-blue-600 to-cyan-600 rounded-lg hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50 whitespace-nowrap">
               🔐 Empire Login
             </Link>
           </nav>
@@ -149,7 +149,7 @@ export default function LandingPage() {
                           <p className="text-xs text-slate-400">in {Math.floor(match.innings[1]?.totalBalls / 6)}.{match.innings[1]?.totalBalls % 6} overs</p>
                         </div>
                       </div>
-                      <Link href={`/matches/${match._id}/live-score`} className="w-full py-2 px-4 bg-linear-to-r from-green-600 to-emerald-600 text-white rounded-lg font-semibold text-sm hover:from-green-500 hover:to-emerald-500 transition">
+                      <Link href={`/matches/${match._id}/live-score`} className="w-full py-3 px-4 bg-linear-to-r from-green-600 to-emerald-600 text-white rounded-lg font-semibold text-sm hover:from-green-500 hover:to-emerald-500 transition">
                         View Live Score →
                       </Link>
                     </div>
@@ -159,23 +159,23 @@ export default function LandingPage() {
 
               {/* Pagination Controls */}
               {liveMatches.length > matchesPerPage && (
-                <div className="flex items-center justify-center gap-4 mt-8">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
                   <button
                     onClick={() => setLiveMatchesPage(prev => Math.max(0, prev - 1))}
                     disabled={liveMatchesPage === 0}
-                    className="px-4 py-2 bg-slate-800 border border-slate-700 text-white rounded-lg font-semibold hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    className="w-full sm:w-auto px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg font-semibold hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                   >
                     ← Previous
                   </button>
                   
-                  <span className="text-slate-400 font-semibold">
+                  <span className="text-slate-400 font-semibold text-center sm:text-left">
                     {liveMatchesPage + 1} of {Math.ceil(liveMatches.length / matchesPerPage)}
                   </span>
                   
                   <button
                     onClick={() => setLiveMatchesPage(prev => Math.min(Math.ceil(liveMatches.length / matchesPerPage) - 1, prev + 1))}
                     disabled={liveMatchesPage >= Math.ceil(liveMatches.length / matchesPerPage) - 1}
-                    className="px-4 py-2 bg-slate-800 border border-slate-700 text-white rounded-lg font-semibold hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    className="w-full sm:w-auto px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg font-semibold hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                   >
                     Next →
                   </button>
@@ -191,27 +191,27 @@ export default function LandingPage() {
 
         {/* Previous Matches Section */}
         <section>
-          <h2 className="text-4xl font-black mb-8 text-white">📊 Previous Matches</h2>
+          <h2 className="text-3xl sm:text-4xl font-black mb-8 text-white">📊 Previous Matches</h2>
           {previousMatches.length > 0 ? (
             <>
               <div className="space-y-4">
                 {previousMatches.map((match) => (
-                  <div key={match._id} className="relative overflow-hidden rounded-xl border border-slate-700 bg-linear-to-br from-slate-900/80 to-slate-800/50 p-6 hover:border-blue-500/50 transition-all cursor-pointer" onClick={() => router.push(`/matches/${match._id}/live-score`)}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-center">
+                  <div key={match._id} className="relative overflow-hidden rounded-xl border border-slate-700 bg-linear-to-br from-slate-900/80 to-slate-800/50 p-4 sm:p-6 hover:border-blue-500/50 transition-all cursor-pointer" onClick={() => router.push(`/matches/${match._id}/live-score`)}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-center">
                       <div>
-                        <h4 className="text-lg font-bold text-white mb-1">{match.teamA.name} vs {match.teamB.name}</h4>
+                        <h4 className="text-base sm:text-lg font-bold text-white mb-1">{match.teamA.name} vs {match.teamB.name}</h4>
                         <p className="text-xs text-slate-400">{match.matchType} • {new Date(match.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-2xl font-bold text-cyan-400">{match.innings[0]?.totalRuns || 0}</p>
+                        <p className="text-xl sm:text-2xl font-bold text-cyan-400">{match.innings[0]?.totalRuns || 0}</p>
                         <p className="text-xs text-slate-400">{match.teamA.name} Innings</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-2xl font-bold text-blue-400">{match.innings[1]?.totalRuns || 0}</p>
+                        <p className="text-xl sm:text-2xl font-bold text-blue-400">{match.innings[1]?.totalRuns || 0}</p>
                         <p className="text-xs text-slate-400">{match.teamB.name} Innings</p>
                       </div>
-                      <div>
-                        <span className={`px-3 py-1 rounded-lg text-sm font-semibold ${
+                      <div className="text-center">
+                        <span className={`inline-block px-3 py-1 rounded-lg text-xs sm:text-sm font-semibold ${
                           match.innings[0]?.totalRuns > match.innings[1]?.totalRuns
                             ? 'bg-green-600/20 border border-green-500/50 text-green-300'
                             : 'bg-blue-600/20 border border-blue-500/50 text-blue-300'
@@ -229,7 +229,7 @@ export default function LandingPage() {
                 <div className="mt-8 text-center">
                   <button
                     onClick={() => router.push('/matches')}
-                    className="px-8 py-3 bg-linear-to-r from-blue-600 to-cyan-600 text-white rounded-lg font-semibold hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50"
+                    className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-linear-to-r from-blue-600 to-cyan-600 text-white rounded-lg font-semibold hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50"
                   >
                     View All Previous Matches ({totalPreviousMatches}) →
                   </button>
@@ -245,48 +245,14 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-slate-800 bg-slate-950/50 backdrop-blur-md mt-20 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8 pb-8 border-b border-slate-800">
-            <div>
-              <h4 className="font-bold text-white mb-4">Product</h4>
-              <ul className="space-y-2 text-slate-400 text-sm">
-                <li><a href="#" className="hover:text-white transition">Features</a></li>
-                <li><a href="#" className="hover:text-white transition">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition">Security</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-4">Company</h4>
-              <ul className="space-y-2 text-slate-400 text-sm">
-                <li><a href="#" className="hover:text-white transition">About</a></li>
-                <li><a href="#" className="hover:text-white transition">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition">Careers</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-4">Support</h4>
-              <ul className="space-y-2 text-slate-400 text-sm">
-                <li><a href="#" className="hover:text-white transition">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition">Contact</a></li>
-                <li><a href="#" className="hover:text-white transition">Status</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-4">Legal</h4>
-              <ul className="space-y-2 text-slate-400 text-sm">
-                <li><a href="#" className="hover:text-white transition">Privacy</a></li>
-                <li><a href="#" className="hover:text-white transition">Terms</a></li>
-                <li><a href="#" className="hover:text-white transition">Cookies</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="flex justify-between items-center">
-            <p className="text-slate-500 text-sm">&copy; 2026 CricKeters. All rights reserved.</p>
-            <div className="flex space-x-6 text-slate-500 text-sm">
-              <a href="#" className="hover:text-white transition">Twitter</a>
-              <a href="#" className="hover:text-white transition">LinkedIn</a>
-              <a href="#" className="hover:text-white transition">GitHub</a>
+      <footer className="relative z-10 border-t border-slate-800 bg-slate-900/30 backdrop-blur-sm mt-12 sm:mt-20">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
+            <p className="text-slate-400 text-xs sm:text-sm">&copy; 2026 CricKeters. All rights reserved.</p>
+            <div className="flex gap-4 sm:gap-6 text-slate-400 text-xs sm:text-sm">
+              <Link href="/privacy" className="hover:text-cyan-400 transition">Privacy</Link>
+              <Link href="/terms" className="hover:text-cyan-400 transition">Terms</Link>
+              <Link href="/contact" className="hover:text-cyan-400 transition">Contact</Link>
             </div>
           </div>
         </div>
