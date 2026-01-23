@@ -653,27 +653,40 @@ export default function MatchDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-950 via-blue-950 to-slate-900">
-      {/* Modern Navbar */}
-      <nav className="sticky top-0 z-50 bg-linear-to-r from-blue-600 via-cyan-500 to-teal-500 text-white shadow-2xl px-3 py-3 sm:px-4 sm:py-4">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <Link href="/matches" className="hover:opacity-80 transition text-sm md:text-base font-semibold">← Back</Link>
-          <h1 className="text-sm md:text-lg font-bold truncate text-center flex-1 mx-2">🏏 {match?.teamA?.name} vs {match?.teamB?.name}</h1>
-          <div className="w-12 md:w-16"></div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-slate-950 text-white overflow-hidden">
+      {/* Animated Background */}
+      <div className="pointer-events-none">
+        {/* Dot Pattern */}
+        <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="dots" x="30" y="30" width="30" height="30" patternUnits="userSpaceOnUse">
+              <circle cx="15" cy="15" r="1.5" fill="#06b6d4"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#dots)"/>
+        </svg>
+      </div>
 
-      <main className="px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6 max-w-3xl mx-auto">
+      {/* Header */}
+      <header className="z-50 border-b border-slate-800 backdrop-blur-md bg-slate-950/50 sticky top-0">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <Link href="/matches" className="px-6 py-2.5 text-sm font-semibold text-white bg-linear-to-r from-blue-600 to-cyan-600 rounded-lg hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50">← Back</Link>
+          <h1 className="text-xl font-black bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent text-center flex-1 mx-4 truncate">🏏 {match?.teamA?.name} vs {match?.teamB?.name}</h1>
+          <div className="w-24"></div>
+        </div>
+      </header>
+
+      <main className="relative z-10 px-4 sm:px-6 lg:px-8 py-8 max-w-4xl mx-auto">
         {error && (
-          <div className="bg-red-900/30 text-red-200 p-3 sm:p-4 rounded-lg mb-4 border border-red-700/50 text-xs sm:text-sm">
+          <div className="bg-red-900/30 border border-red-700/50 text-red-200 p-4 rounded-lg mb-6">
             ⚠️ {error}
           </div>
         )}
 
         {!match ? (
-          <div className="text-center text-gray-400 py-12">⏳ Loading match data...</div>
+          <div className="text-center text-slate-400 py-16">⏳ Loading match data...</div>
         ) : matchComplete ? (
-          <div className="relative overflow-hidden bg-linear-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl p-6 md:p-8 border border-cyan-400/20">
+          <div className="relative overflow-hidden rounded-xl border border-green-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8 shadow-2xl">
             {/* Firecracker/confetti layers */}
             <div className="absolute inset-0 pointer-events-none mix-blend-screen opacity-70 animate-pulse" style={{ background: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.15), transparent 25%), radial-gradient(circle at 80% 30%, rgba(255,0,128,0.15), transparent 30%), radial-gradient(circle at 40% 70%, rgba(0,200,255,0.15), transparent 25%), radial-gradient(circle at 70% 80%, rgba(255,200,0,0.15), transparent 20%)' }} />
             <div className="absolute inset-0 pointer-events-none animate-[spin_22s_linear_infinite]" style={{ background: 'conic-gradient(from 0deg, rgba(255,0,128,0.12), rgba(0,200,255,0.12), rgba(0,255,128,0.12), rgba(255,200,0,0.12), rgba(255,0,128,0.12))' }} />
@@ -750,32 +763,35 @@ export default function MatchDetailPage() {
             </div>
           </div>
         ) : match.innings.length === 0 ? (
-          <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl p-6 md:p-8 text-center border border-cyan-400/20">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">🎯 Start Innings</h2>
-            <p className="text-gray-300 mb-6 text-xs md:text-sm">Select which team will bat first</p>
-            <div className="space-y-3">
-              <button
-                onClick={() => startInnings(match.teamA.id)}
-                disabled={isSaving}
-                className="w-full py-3 md:py-4 px-4 md:px-6 bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-xl font-bold text-sm md:text-base transition shadow-lg"
-              >
-                {isSaving ? '⏳ Starting...' : `▶ ${match.teamA.name} Innings`}
-              </button>
-              <button
-                onClick={() => startInnings(match.teamB.id)}
-                disabled={isSaving}
-                className="w-full py-3 md:py-4 px-4 md:px-6 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-xl font-bold text-sm md:text-base transition shadow-lg"
-              >
-                {isSaving ? '⏳ Starting...' : `▶ ${match.teamB.name} Innings`}
-              </button>
+          <section>
+            <div className="relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-12 text-center">
+              <h2 className="text-4xl font-black text-white mb-3">🎯 Start Innings</h2>
+              <p className="text-slate-400 mb-8">Select which team will bat first</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button
+                  onClick={() => startInnings(match.teamA.id)}
+                  disabled={isSaving}
+                  className="py-4 px-6 bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-blue-500/50"
+                >
+                  {isSaving ? '⏳ Starting...' : `▶ ${match.teamA.name} Innings`}
+                </button>
+                <button
+                  onClick={() => startInnings(match.teamB.id)}
+                  disabled={isSaving}
+                  className="py-4 px-6 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-green-500/50"
+                >
+                  {isSaving ? '⏳ Starting...' : `▶ ${match.teamB.name} Innings`}
+                </button>
+              </div>
             </div>
-          </div>
+          </section>
         ) : (
           <>
             {match.innings[selectedInnings] && (
               <>
-                {/* BROADCAST-STYLE SCOREBOARD */}
-                <div className="bg-linear-to-r from-red-600 to-red-700 text-white rounded-xl shadow-2xl p-4 md:p-5 mb-6 border border-red-500/50 font-mono text-xs md:text-sm">
+                {/* SCOREBOARD */}
+                <section className="mb-8">
+                  <div className="relative overflow-hidden rounded-xl border border-green-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-6 shadow-2xl font-mono text-sm">
                   <div className="flex items-center justify-between gap-2 md:gap-4 flex-wrap">
                     {/* Runs & Balls */}
                     <div className="font-bold text-lg md:text-2xl bg-slate-900/40 px-3 py-2 rounded-lg">
@@ -802,6 +818,7 @@ export default function MatchDetailPage() {
                     })()}
                   </div>
                 </div>
+                </section>
 
                 {/* Manual start next innings if auto-start failed */}
                 {(() => {

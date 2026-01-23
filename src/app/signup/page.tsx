@@ -65,10 +65,10 @@ export default function SignupPage() {
       </div>
 
       {/* Header */}
-      <header className="relative z-10 border-b border-slate-800 backdrop-blur-md bg-slate-950/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex justify-between items-center">
+      <header className="relative z-10 border-b border-slate-800 backdrop-blur-md bg-slate-950/50 h-24 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 flex justify-between items-center h-full">
           <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition">
-            <div className="text-4xl">🏏</div>
+            <img src="/logo.png" alt="CricKeters" className="h-32 w-32 object-contain -my-4" />
             <div>
               <h1 className="text-2xl font-black bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">CricKeters</h1>
               <p className="text-xs text-slate-400 font-semibold tracking-widest">LIVE MATCH SCORES</p>
@@ -85,7 +85,6 @@ export default function SignupPage() {
         <div className="w-full max-w-md">
           {/* Welcome Section */}
           <div className="text-center mb-12">
-            <div className="text-6xl mb-4">🏏</div>
             <h2 className="text-4xl font-black bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-3">
               Create Account
             </h2>

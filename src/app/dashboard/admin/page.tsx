@@ -194,118 +194,136 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-950 via-blue-950 to-slate-900">
+    <div className="min-h-screen bg-slate-950 text-white overflow-hidden">
+      {/* Animated Background */}
+      <div className="pointer-events-none">
+        {/* Dot Pattern */}
+        <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="dots" x="30" y="30" width="30" height="30" patternUnits="userSpaceOnUse">
+              <circle cx="15" cy="15" r="1.5" fill="#06b6d4"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#dots)"/>
+        </svg>
+      </div>
+
       {/* Header */}
-      <header className="bg-linear-to-r from-red-600 via-pink-600 to-red-700 text-white shadow-2xl sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-5 flex justify-between items-center">
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="text-3xl md:text-4xl">🔧</div>
+      <header className="z-50 border-b border-slate-800 backdrop-blur-md bg-slate-950/50 h-24 sticky top-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 flex justify-between items-center h-full">
+          <div className="flex items-center space-x-3">
+            <img src="/logo.png" alt="CricKeters" className="h-32 w-32 object-contain -my-4" />
             <div>
-              <h1 className="text-xl md:text-3xl font-bold">Admin Panel</h1>
-              <p className="text-xs md:text-sm text-red-100">Manage system & users</p>
+              <h1 className="text-2xl font-black bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Admin Panel</h1>
+              <p className="text-xs text-slate-400 font-semibold tracking-widest">SYSTEM MANAGEMENT</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="text-right">
-              <p className="text-xs md:text-sm text-red-100">Welcome, <strong>{userName}</strong></p>
+            <div className="text-right hidden md:block">
+              <p className="text-xs text-slate-400 font-semibold">Welcome</p>
+              <p className="text-sm font-bold text-white"><strong>{userName}</strong></p>
             </div>
             <button
               onClick={handleLogout}
-              className="px-3 md:px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg font-semibold text-xs md:text-base transition duration-300 shadow-lg"
+              className="px-6 py-2.5 text-sm font-semibold text-white bg-linear-to-r from-blue-600 to-cyan-600 rounded-lg hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50"
             >
-              Logout
+              � Logout
             </button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-12">
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
-          <div className="bg-linear-to-br from-blue-500/20 to-cyan-500/10 border border-cyan-400/30 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm">
-            <p className="text-cyan-300 text-xs md:text-sm font-semibold mb-2">Total Teams</p>
-            <h3 className="text-4xl md:text-5xl font-bold text-cyan-400">{stats.teams}</h3>
-            <p className="text-cyan-400/70 text-xs md:text-sm mt-2">Teams created</p>
+        <section className="mb-12">
+          <h2 className="text-4xl font-black mb-8 text-white">📊 System Overview</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8 group hover:border-cyan-400/80 transition-all">
+              <div className="relative z-10">
+                <p className="text-cyan-300 text-sm font-semibold mb-2">Total Teams</p>
+                <h3 className="text-5xl font-bold text-cyan-400 mb-2">{stats.teams}</h3>
+                <p className="text-slate-400">Teams created</p>
+              </div>
+            </div>
+            <div className="relative overflow-hidden rounded-xl border border-green-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8 group hover:border-green-400/80 transition-all">
+              <div className="relative z-10">
+                <p className="text-green-300 text-sm font-semibold mb-2">Total Players</p>
+                <h3 className="text-5xl font-bold text-green-400 mb-2">{stats.players}</h3>
+                <p className="text-slate-400">Players registered</p>
+              </div>
+            </div>
+            <div className="relative overflow-hidden rounded-xl border border-blue-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8 group hover:border-blue-400/80 transition-all">
+              <div className="relative z-10">
+                <p className="text-blue-300 text-sm font-semibold mb-2">Total Matches</p>
+                <h3 className="text-5xl font-bold text-blue-400 mb-2">{stats.matches}</h3>
+                <p className="text-slate-400">Matches created</p>
+              </div>
+            </div>
           </div>
-          <div className="bg-linear-to-br from-green-500/20 to-emerald-500/10 border border-green-400/30 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm">
-            <p className="text-green-300 text-xs md:text-sm font-semibold mb-2">Total Players</p>
-            <h3 className="text-4xl md:text-5xl font-bold text-green-400">{stats.players}</h3>
-            <p className="text-green-400/70 text-xs md:text-sm mt-2">Players registered</p>
-          </div>
-          <div className="bg-linear-to-br from-orange-500/20 to-red-500/10 border border-orange-400/30 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm">
-            <p className="text-orange-300 text-xs md:text-sm font-semibold mb-2">Total Matches</p>
-            <h3 className="text-4xl md:text-5xl font-bold text-orange-400">{stats.matches}</h3>
-            <p className="text-orange-400/70 text-xs md:text-sm mt-2">Matches created</p>
-          </div>
-        </div>
+        </section>
 
         {/* Admin Controls */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
-          <button
-            onClick={() => {
-              setShowUserManagement(!showUserManagement);
-              if (!showUserManagement && users.length === 0) {
-                fetchUsers();
-              }
-            }}
-            className="group relative bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-red-400/20 shadow-xl hover:shadow-2xl hover:border-red-400/50 transition-all duration-300 h-full cursor-pointer transform hover:scale-105"
-          >
-            <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-linear-to-r from-red-500/0 to-pink-500/0 group-hover:from-red-500/10 group-hover:to-pink-500/10 transition duration-300"></div>
-            <div className="relative">
-              <div className="flex items-start justify-between mb-4">
-                <h3 className="text-xl md:text-2xl font-bold text-white">👤 Manage Users</h3>
-                <div className="text-3xl">👨‍💼</div>
-              </div>
-              <p className="text-red-300/70 mb-4">View, edit roles & delete users</p>
-              <span className="text-red-400 font-bold group-hover:text-red-300 transition flex items-center gap-1">
-                {showUserManagement ? 'Hide Users' : 'Show Users'} <span className="group-hover:translate-x-1 transition">→</span>
-              </span>
-            </div>
-          </button>
-
-          <Link href="/teams">
-            <div className="group relative bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-blue-400/20 shadow-xl hover:shadow-2xl hover:border-blue-400/50 transition-all duration-300 h-full cursor-pointer transform hover:scale-105">
-              <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-linear-to-r from-blue-500/0 to-cyan-500/0 group-hover:from-blue-500/10 group-hover:to-cyan-500/10 transition duration-300"></div>
-              <div className="relative">
+        <section className="mb-12">
+          <h2 className="text-4xl font-black mb-8 text-white">⚙️ Quick Actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <button
+              onClick={() => {
+                setShowUserManagement(!showUserManagement);
+                if (!showUserManagement && users.length === 0) {
+                  fetchUsers();
+                }
+              }}
+              className="relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8 group hover:border-cyan-400/80 transition-all cursor-pointer"
+            >
+              <div className="relative z-10">
                 <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-xl md:text-2xl font-bold text-white">👥 Manage Teams</h3>
-                  <div className="text-3xl">🏏</div>
+                  <h3 className="text-2xl font-bold text-white">👤 Manage Users</h3>
                 </div>
-                <p className="text-blue-300/70 mb-4">View & manage all teams</p>
-                <span className="text-blue-400 font-bold group-hover:text-blue-300 transition flex items-center gap-1">
-                  Go to Teams <span className="group-hover:translate-x-1 transition">→</span>
+                <p className="text-slate-400 mb-4">View, edit roles & delete users</p>
+                <span className="text-cyan-400 font-bold group-hover:text-cyan-300 transition flex items-center gap-1">
+                  {showUserManagement ? 'Hide Users' : 'Show Users'} <span className="group-hover:translate-x-1 transition">→</span>
                 </span>
               </div>
-            </div>
-          </Link>
+            </button>
 
-          <Link href="/matches">
-            <div className="group relative bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-purple-400/20 shadow-xl hover:shadow-2xl hover:border-purple-400/50 transition-all duration-300 h-full cursor-pointer transform hover:scale-105">
-              <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-linear-to-r from-purple-500/0 to-pink-500/0 group-hover:from-purple-500/10 group-hover:to-pink-500/10 transition duration-300"></div>
-              <div className="relative">
-                <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-xl md:text-2xl font-bold text-white">🏏 Manage Matches</h3>
-                  <div className="text-3xl">🎯</div>
+            <Link href="/teams">
+              <div className="relative overflow-hidden rounded-xl border border-green-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8 group hover:border-green-400/80 transition-all cursor-pointer">
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between mb-4">
+                    <h3 className="text-2xl font-bold text-white">👥 Manage Teams</h3>
+                  </div>
+                  <p className="text-slate-400 mb-4">View & manage all teams</p>
+                  <span className="text-green-400 font-bold group-hover:text-green-300 transition flex items-center gap-1">
+                    Go to Teams <span className="group-hover:translate-x-1 transition">→</span>
+                  </span>
                 </div>
-                <p className="text-purple-300/70 mb-4">View & manage all matches</p>
-                <span className="text-purple-400 font-bold group-hover:text-purple-300 transition flex items-center gap-1">
-                  Go to Matches <span className="group-hover:translate-x-1 transition">→</span>
-                </span>
               </div>
-            </div>
-          </Link>
-        </div>
+            </Link>
+
+            <Link href="/matches">
+              <div className="relative overflow-hidden rounded-xl border border-blue-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8 group hover:border-blue-400/80 transition-all cursor-pointer">
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between mb-4">
+                    <h3 className="text-2xl font-bold text-white">🎯 Manage Matches</h3>
+                  </div>
+                  <p className="text-slate-400 mb-4">View & manage all matches</p>
+                  <span className="text-blue-400 font-bold group-hover:text-blue-300 transition flex items-center gap-1">
+                    Go to Matches <span className="group-hover:translate-x-1 transition">→</span>
+                  </span>
+                </div>
+              </div>
+            </Link>
+          </div>
+        </section>
 
         {/* User Management Section */}
         {showUserManagement && (
-        <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 mb-8 border border-red-400/20 shadow-xl">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-2">
-              👤 User Management
-            </h2>
+        <div className="relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8 mb-12">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl font-bold text-white">👤 User Management</h2>
             <button
               onClick={() => setShowUserManagement(false)}
-              className="px-3 md:px-4 py-2 bg-linear-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white rounded-lg font-semibold text-xs md:text-base transition duration-300 shadow-lg"
+              className="px-6 py-2.5 bg-linear-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 text-white rounded-lg font-semibold transition-all shadow-lg"
             >
               Close
             </button>
@@ -323,52 +341,52 @@ export default function AdminDashboard() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-cyan-400/20">
-                    <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-cyan-300">Name</th>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-cyan-300">Email</th>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-cyan-300">Role</th>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-cyan-300">Created</th>
-                    <th className="px-4 md:px-6 py-3 text-center text-xs md:text-sm font-semibold text-cyan-300">Actions</th>
+                  <tr className="border-b border-cyan-500/30">
+                    <th className="px-6 py-4 text-left text-sm font-bold text-cyan-300">Name</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-cyan-300">Email</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-cyan-300">Role</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-cyan-300">Created</th>
+                    <th className="px-6 py-4 text-center text-sm font-bold text-cyan-300">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {users.map((user) => (
-                    <tr key={user.id} className="border-b border-cyan-400/10 hover:bg-cyan-500/5 transition">
-                      <td className="px-4 md:px-6 py-3 text-xs md:text-sm text-white">{user.name}</td>
-                      <td className="px-4 md:px-6 py-3 text-xs md:text-sm text-cyan-300/70">{user.email}</td>
-                      <td className="px-4 md:px-6 py-3">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    <tr key={user.id} className="border-b border-cyan-500/10 hover:bg-cyan-500/5 transition">
+                      <td className="px-6 py-4 text-sm text-white">{user.name}</td>
+                      <td className="px-6 py-4 text-sm text-cyan-300/70">{user.email}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                           user.role === 'ADMIN' 
-                            ? 'bg-red-500/20 border border-red-400/50 text-red-300' 
+                            ? 'bg-cyan-500/20 border border-cyan-400/50 text-cyan-300' 
                             : 'bg-blue-500/20 border border-blue-400/50 text-blue-300'
                         }`}>
                           {user.role === 'ADMIN' ? '🔧 ADMIN' : '👨‍⚖️ EMPIRE'}
                         </span>
                       </td>
-                      <td className="px-4 md:px-6 py-3 text-xs md:text-sm text-cyan-300/70">
+                      <td className="px-6 py-4 text-sm text-cyan-300/70">
                         {new Date(user.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="px-4 md:px-6 py-3 text-center">
+                      <td className="px-6 py-4 text-center">
                         {user.id !== adminId ? (
                           <div className="flex gap-2 justify-center flex-wrap">
                             <select
                               value={user.role}
                               onChange={(e) => updateUserRole(user.id, e.target.value)}
-                              className="px-2 py-1 bg-slate-700/50 border border-cyan-500/30 rounded text-xs md:text-sm font-semibold text-white hover:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition cursor-pointer"
+                              className="px-3 py-1.5 bg-slate-700/50 border border-cyan-500/30 rounded font-semibold text-white hover:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition cursor-pointer text-xs"
                             >
                               <option value="UMPIRE">👨‍⚖️ EMPIRE</option>
                               <option value="ADMIN">🔧 ADMIN</option>
                             </select>
                             <button
                               onClick={() => deleteUser(user.id)}
-                              className="px-3 py-1 bg-red-600/80 hover:bg-red-700 text-white rounded text-xs md:text-sm font-semibold transition"
+                              className="px-4 py-1.5 bg-red-600/80 hover:bg-red-700 text-white rounded font-semibold transition text-xs"
                             >
                               Delete
                             </button>
                           </div>
                         ) : (
-                          <div className="flex gap-2 justify-center items-center text-xs md:text-sm">
-                            <span className="px-2 py-1 bg-cyan-500/20 border border-cyan-400/50 text-cyan-300 rounded font-semibold">{user.role}</span>
+                          <div className="flex gap-2 justify-center items-center text-xs">
+                            <span className="px-3 py-1 bg-cyan-500/20 border border-cyan-400/50 text-cyan-300 rounded font-semibold">{user.role}</span>
                             <span className="text-cyan-300/70">(You)</span>
                           </div>
                         )}
@@ -384,79 +402,79 @@ export default function AdminDashboard() {
 
         {/* Admin Features - Hidden when user management is open */}
         {!showUserManagement && (
-        <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 mb-8 border border-cyan-400/20 shadow-xl">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-2">
-            🎯 Quick Stats
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-cyan-500/10 border border-cyan-400/30 p-4 rounded-lg">
-              <p className="text-cyan-300 text-xs font-semibold mb-2">Total Users</p>
-              <h4 className="text-2xl md:text-3xl font-bold text-cyan-400">{users.length}</h4>
-            </div>
-            <div className="bg-blue-500/10 border border-blue-400/30 p-4 rounded-lg">
-              <p className="text-blue-300 text-xs font-semibold mb-2">Admins</p>
-              <h4 className="text-2xl md:text-3xl font-bold text-blue-400">{users.filter(u => u.role === 'ADMIN').length}</h4>
-            </div>
-            <div className="bg-purple-500/10 border border-purple-400/30 p-4 rounded-lg">
-              <p className="text-purple-300 text-xs font-semibold mb-2">Empires</p>
-              <h4 className="text-2xl md:text-3xl font-bold text-purple-400">{users.filter(u => u.role === 'UMPIRE').length}</h4>
-            </div>
-            <div className="bg-pink-500/10 border border-pink-400/30 p-4 rounded-lg">
-              <p className="text-pink-300 text-xs font-semibold mb-2">Active</p>
-              <h4 className="text-2xl md:text-3xl font-bold text-pink-400">{users.length}</h4>
+        <section className="mb-12">
+          <h2 className="text-3xl font-bold text-white mb-6">🎯 User Statistics</h2>
+          <div className="relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="text-center">
+                <p className="text-cyan-300 text-sm font-semibold mb-2">Total Users</p>
+                <h4 className="text-4xl font-bold text-cyan-400">{users.length}</h4>
+              </div>
+              <div className="text-center">
+                <p className="text-blue-300 text-sm font-semibold mb-2">Admins</p>
+                <h4 className="text-4xl font-bold text-blue-400">{users.filter(u => u.role === 'ADMIN').length}</h4>
+              </div>
+              <div className="text-center">
+                <p className="text-green-300 text-sm font-semibold mb-2">Empires</p>
+                <h4 className="text-4xl font-bold text-green-400">{users.filter(u => u.role === 'UMPIRE').length}</h4>
+              </div>
+              <div className="text-center">
+                <p className="text-emerald-300 text-sm font-semibold mb-2">Active</p>
+                <h4 className="text-4xl font-bold text-emerald-400">{users.length}</h4>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
         )}
 
         {/* Maintenance Mode */}
-        <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-yellow-400/20 shadow-xl">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0 mb-6">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 flex items-center gap-2">
-                🔧 Maintenance Mode
-              </h2>
-              <p className="text-yellow-300/70 text-sm md:text-base">Enable or disable maintenance mode for all users</p>
+        <section>
+          <div className="relative overflow-hidden rounded-xl border border-yellow-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-2">🔧 Maintenance Mode</h2>
+                <p className="text-yellow-300/70">Enable or disable maintenance mode for all users</p>
+              </div>
+              <div className={`px-6 py-3 rounded-lg font-bold text-white text-sm whitespace-nowrap ${maintenanceMode ? 'bg-red-600/80' : 'bg-green-600/80'}`}>
+                {maintenanceMode ? '🔴 ACTIVE' : '🟢 INACTIVE'}
+              </div>
             </div>
-            <div className={`px-6 py-3 rounded-lg font-bold text-white text-sm md:text-base ${maintenanceMode ? 'bg-red-600/80' : 'bg-green-600/80'}`}>
-              {maintenanceMode ? '🔴 ACTIVE' : '🟢 INACTIVE'}
+
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-yellow-300 mb-3">Maintenance Message</label>
+              <textarea
+                value={maintenanceMessage}
+                onChange={(e) => setMaintenanceMessage(e.target.value)}
+                className="w-full px-4 py-3 bg-slate-700/50 border border-yellow-500/30 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition text-sm"
+                rows={4}
+                placeholder="Enter maintenance message..."
+              />
             </div>
+
+            <button
+              onClick={toggleMaintenanceMode}
+              disabled={maintenanceLoading}
+              className={`w-full md:w-auto px-8 py-3 rounded-lg font-bold text-white transition ${
+                maintenanceLoading
+                  ? 'bg-gray-600/50 cursor-not-allowed'
+                  : maintenanceMode
+                  ? 'bg-linear-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
+                  : 'bg-linear-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800'
+              }`}
+            >
+              {maintenanceLoading ? '⏳ Updating...' : maintenanceMode ? '✓ Disable Maintenance Mode' : '✗ Enable Maintenance Mode'}
+            </button>
+
+            {maintenanceMode && (
+              <div className="mt-6 bg-yellow-500/10 border border-yellow-400/30 text-yellow-300 p-6 rounded-lg">
+                <p className="font-bold mb-2">⚠️ Maintenance Mode is Currently Active</p>
+                <p className="text-sm">
+                  All users except admins will see the maintenance page. When you disable it, users will be able to access the application again.
+                </p>
+              </div>
+            )}
           </div>
-
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-yellow-300 mb-2">Maintenance Message</label>
-            <textarea
-              value={maintenanceMessage}
-              onChange={(e) => setMaintenanceMessage(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-700/50 border border-yellow-500/30 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition text-sm"
-              rows={4}
-              placeholder="Enter maintenance message..."
-            />
-          </div>
-
-          <button
-            onClick={toggleMaintenanceMode}
-            disabled={maintenanceLoading}
-            className={`w-full md:w-auto px-6 py-3 rounded-lg font-bold text-white transition text-sm md:text-base ${
-              maintenanceLoading
-                ? 'bg-gray-600/50 cursor-not-allowed'
-                : maintenanceMode
-                ? 'bg-linear-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
-                : 'bg-linear-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800'
-            }`}
-          >
-            {maintenanceLoading ? '⏳ Updating...' : maintenanceMode ? '✓ Disable Maintenance Mode' : '✗ Enable Maintenance Mode'}
-          </button>
-
-          {maintenanceMode && (
-            <div className="mt-6 bg-yellow-500/10 border border-yellow-400/30 text-yellow-300 p-4 rounded-lg">
-              <p className="font-semibold mb-2">⚠️ Maintenance Mode is Currently Active</p>
-              <p className="text-xs md:text-sm">
-                All users except admins will see the maintenance page. When you disable it, users will be able to access the application again.
-              </p>
-            </div>
-          )}
-        </div>
+        </section>
       </main>
     </div>
   );

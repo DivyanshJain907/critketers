@@ -72,27 +72,43 @@ export default function UmpireDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-white text-xl">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-950 via-blue-950 to-slate-900">
-      {/* Modern Header */}
-      <header className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-500 text-white shadow-2xl sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-5 flex justify-between items-center">
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="text-3xl md:text-4xl">🏏</div>
-            <h1 className="text-xl md:text-3xl font-bold">Cricket Scoring</h1>
+    <div className="min-h-screen bg-slate-950 text-white overflow-hidden">
+      {/* Animated Background */}
+      <div className="pointer-events-none">
+        {/* Dot Pattern */}
+        <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="dots" x="30" y="30" width="30" height="30" patternUnits="userSpaceOnUse">
+              <circle cx="15" cy="15" r="1.5" fill="#06b6d4"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#dots)"/>
+        </svg>
+      </div>
+
+      {/* Header */}
+      <header className="z-50 border-b border-slate-800 backdrop-blur-md bg-slate-950/50 h-24 sticky top-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 flex justify-between items-center h-full">
+          <div className="flex items-center space-x-3">
+            <img src="/logo.png" alt="CricKeters" className="h-32 w-32 object-contain -my-4" />
+            <div>
+              <h1 className="text-2xl font-black bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Cricket Scoring</h1>
+              <p className="text-xs text-slate-400 font-semibold tracking-widest">EMPIRE CONTROL</p>
+            </div>
           </div>
 
           {/* Profile Circle Icon with Dropdown */}
           <div className="relative">
             <button
               onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white text-blue-600 font-bold flex items-center justify-center hover:bg-blue-100 transition duration-300 shadow-lg hover:shadow-xl"
+              className="w-12 h-12 rounded-full bg-linear-to-r from-blue-500 to-cyan-500 text-white font-bold flex items-center justify-center hover:from-blue-400 hover:to-cyan-400 transition duration-300 shadow-lg hover:shadow-cyan-500/50"
               title={userName}
             >
               {userName.charAt(0).toUpperCase()}
@@ -100,17 +116,17 @@ export default function UmpireDashboard() {
 
             {/* Dropdown Menu */}
             {showProfileMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-xl py-2 z-50">
-                <div className="px-4 py-3 border-b border-gray-200">
+              <div className="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 text-white rounded-lg shadow-xl py-2 z-50">
+                <div className="px-4 py-3 border-b border-slate-700">
                   <p className="font-semibold text-sm">{userName}</p>
-                  <p className="text-xs text-gray-500">👤 Empire</p>
+                  <p className="text-xs text-slate-400">👨‍⚖️ Empire</p>
                 </div>
                 <button
                   onClick={() => {
                     setShowProfileMenu(false);
                     handleLogout();
                   }}
-                  className="w-full text-left px-4 py-2 hover:bg-red-50 text-red-600 font-semibold text-sm transition"
+                  className="w-full text-left px-4 py-2 hover:bg-slate-700 text-red-400 hover:text-red-300 font-semibold text-sm transition"
                 >
                   🚪 Logout
                 </button>
@@ -121,34 +137,35 @@ export default function UmpireDashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-12">
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Welcome Section */}
-        <div className="mb-8 md:mb-12">
-          <h2 className="text-2xl md:text-4xl font-bold text-white mb-1 md:mb-2">Welcome back, {userName}! 👋</h2>
-          <p className="text-cyan-300 text-sm md:text-lg">Follow the steps to get started</p>
-        </div>
+        <section className="mb-12">
+          <h2 className="text-4xl font-black text-white mb-2">Welcome back, {userName}! 👋</h2>
+          <p className="text-slate-400 text-lg">Follow the steps to get started</p>
+        </section>
 
         {/* Step-wise Flow */}
-        <div className="mb-12">
+        <section className="mb-16">
+          <h2 className="text-3xl font-bold text-white mb-6">🚀 Getting Started</h2>
           <div className="space-y-4">
             {/* Step 1: Create Teams */}
-            <div className={`rounded-xl md:rounded-2xl p-6 md:p-8 border-2 transition-all ${
+            <div className={`relative overflow-hidden rounded-xl border-2 p-8 transition-all ${
               teams.length === 0
-                ? 'bg-linear-to-br from-yellow-500/20 to-orange-500/20 border-yellow-400/50 shadow-lg'
-                : 'bg-linear-to-br from-green-500/20 to-emerald-500/20 border-green-400/50'
+                ? 'border-yellow-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70'
+                : 'border-green-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70'
             }`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-start gap-4">
-                  <div className={`text-4xl flex items-center justify-center w-16 h-16 rounded-lg ${
+              <div className="flex items-center justify-between gap-8">
+                <div className="flex items-start gap-6">
+                  <div className={`text-6xl flex items-center justify-center w-20 h-20 rounded-lg shrink-0 ${
                     teams.length === 0
-                      ? 'bg-yellow-500/30'
-                      : 'bg-green-500/30'
+                      ? 'bg-yellow-500/20'
+                      : 'bg-green-500/20'
                   }`}>
                     {teams.length === 0 ? '1️⃣' : '✅'}
                   </div>
                   <div>
-                    <h3 className="text-xl md:text-2xl font-bold text-white mb-2">Step 1: Create Teams</h3>
-                    <p className="text-cyan-200 text-sm md:text-base">
+                    <h3 className="text-2xl font-bold text-white mb-2">Step 1: Create Teams</h3>
+                    <p className="text-slate-400">
                       {teams.length === 0
                         ? 'Create teams before you can start matches'
                         : `Great! You have ${teams.length} team${teams.length !== 1 ? 's' : ''}`}
@@ -157,7 +174,7 @@ export default function UmpireDashboard() {
                 </div>
                 <Link
                   href="/teams"
-                  className="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-lg transition duration-300 transform hover:scale-105"
+                  className="px-8 py-3 bg-linear-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-bold rounded-lg transition-all shadow-lg hover:shadow-yellow-500/50 shrink-0"
                 >
                   {teams.length === 0 ? 'Create Teams' : 'Manage Teams'}
                 </Link>
@@ -165,27 +182,27 @@ export default function UmpireDashboard() {
             </div>
 
             {/* Step 2: Create Matches */}
-            <div className={`rounded-xl md:rounded-2xl p-6 md:p-8 border-2 transition-all ${
+            <div className={`relative overflow-hidden rounded-xl border-2 p-8 transition-all ${
               teams.length === 0
-                ? 'bg-slate-700/50 border-slate-600/50 opacity-60'
+                ? 'border-slate-600/50 bg-linear-to-br from-slate-900/50 to-slate-800/30 opacity-60'
                 : matches.length === 0
-                ? 'bg-linear-to-br from-blue-500/20 to-cyan-500/20 border-blue-400/50 shadow-lg'
-                : 'bg-linear-to-br from-green-500/20 to-emerald-500/20 border-green-400/50'
+                ? 'border-blue-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70'
+                : 'border-green-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70'
             }`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-start gap-4">
-                  <div className={`text-4xl flex items-center justify-center w-16 h-16 rounded-lg ${
+              <div className="flex items-center justify-between gap-8">
+                <div className="flex items-start gap-6">
+                  <div className={`text-6xl flex items-center justify-center w-20 h-20 rounded-lg shrink-0 ${
                     teams.length === 0
-                      ? 'bg-gray-500/30'
+                      ? 'bg-slate-600/20'
                       : matches.length === 0
-                      ? 'bg-blue-500/30'
-                      : 'bg-green-500/30'
+                      ? 'bg-blue-500/20'
+                      : 'bg-green-500/20'
                   }`}>
                     {teams.length === 0 ? '🔒' : matches.length === 0 ? '2️⃣' : '✅'}
                   </div>
                   <div>
-                    <h3 className="text-xl md:text-2xl font-bold text-white mb-2">Step 2: Create Matches</h3>
-                    <p className="text-cyan-200 text-sm md:text-base">
+                    <h3 className="text-2xl font-bold text-white mb-2">Step 2: Create Matches</h3>
+                    <p className="text-slate-400">
                       {teams.length === 0
                         ? 'Create teams first to create matches'
                         : matches.length === 0
@@ -201,10 +218,10 @@ export default function UmpireDashboard() {
                     }
                   }}
                   disabled={teams.length === 0}
-                  className={`px-6 py-3 font-bold rounded-lg transition duration-300 transform ${
+                  className={`px-8 py-3 font-bold rounded-lg transition-all shrink-0 ${
                     teams.length === 0
-                      ? 'bg-gray-500 text-gray-300 cursor-not-allowed'
-                      : 'bg-blue-500 hover:bg-blue-600 text-white hover:scale-105'
+                      ? 'bg-slate-600 text-slate-400 cursor-not-allowed'
+                      : 'bg-linear-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg hover:shadow-blue-500/50'
                   }`}
                 >
                   {matches.length === 0 ? 'Create Matches' : 'Manage Matches'}
@@ -212,72 +229,82 @@ export default function UmpireDashboard() {
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Stats Cards - Show when both teams and matches exist */}
         {teams.length > 0 && matches.length > 0 && (
           <>
-            <h3 className="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6">📊 Stats Overview</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8 md:mb-12">
-              <div className="bg-linear-to-br from-blue-500 to-blue-700 rounded-lg md:rounded-xl p-4 md:p-6 shadow-xl hover:shadow-2xl transition">
-                <div className="flex flex-col">
-                  <p className="text-blue-100 text-xs md:text-sm font-semibold">Total Matches</p>
-                  <p className="text-2xl md:text-4xl font-bold text-white mt-2">{totalMatches}</p>
+            <section className="mb-16">
+              <h2 className="text-3xl font-bold text-white mb-8">📊 Stats Overview</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8 group hover:border-cyan-400/80 transition-all">
+                  <div className="relative z-10">
+                    <p className="text-cyan-300 text-sm font-semibold mb-2">Total Matches</p>
+                    <h3 className="text-5xl font-bold text-cyan-400">{totalMatches}</h3>
+                  </div>
                 </div>
-              </div>
 
-              <div className="bg-linear-to-br from-cyan-500 to-cyan-700 rounded-lg md:rounded-xl p-4 md:p-6 shadow-xl hover:shadow-2xl transition">
-                <div className="flex flex-col">
-                  <p className="text-cyan-100 text-xs md:text-sm font-semibold">Not Started</p>
-                  <p className="text-2xl md:text-4xl font-bold text-white mt-2">{notStartedMatches.length}</p>
+                <div className="relative overflow-hidden rounded-xl border border-yellow-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8 group hover:border-yellow-400/80 transition-all">
+                  <div className="relative z-10">
+                    <p className="text-yellow-300 text-sm font-semibold mb-2">Not Started</p>
+                    <h3 className="text-5xl font-bold text-yellow-400">{notStartedMatches.length}</h3>
+                  </div>
                 </div>
-              </div>
 
-              <div className="bg-linear-to-br from-green-500 to-green-700 rounded-lg md:rounded-xl p-4 md:p-6 shadow-xl hover:shadow-2xl transition">
-                <div className="flex flex-col">
-                  <p className="text-green-100 text-xs md:text-sm font-semibold">Ongoing</p>
-                  <p className="text-2xl md:text-4xl font-bold text-white mt-2">{ongoingMatches.length}</p>
+                <div className="relative overflow-hidden rounded-xl border border-green-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8 group hover:border-green-400/80 transition-all">
+                  <div className="relative z-10">
+                    <p className="text-green-300 text-sm font-semibold mb-2">Ongoing</p>
+                    <h3 className="text-5xl font-bold text-green-400">{ongoingMatches.length}</h3>
+                  </div>
                 </div>
-              </div>
 
-              <div className="bg-linear-to-br from-purple-500 to-purple-700 rounded-lg md:rounded-xl p-4 md:p-6 shadow-xl hover:shadow-2xl transition">
-                <div className="flex flex-col">
-                  <p className="text-purple-100 text-xs md:text-sm font-semibold">Completed</p>
-                  <p className="text-2xl md:text-4xl font-bold text-white mt-2">{completedMatches}</p>
+                <div className="relative overflow-hidden rounded-xl border border-blue-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8 group hover:border-blue-400/80 transition-all">
+                  <div className="relative z-10">
+                    <p className="text-blue-300 text-sm font-semibold mb-2">Completed</p>
+                    <h3 className="text-5xl font-bold text-blue-400">{completedMatches}</h3>
+                  </div>
                 </div>
               </div>
-            </div>
+            </section>
           </>
         )}
 
         {/* Quick Actions */}
         {teams.length > 0 && matches.length > 0 && (
-          <>
-            <h3 className="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6">⚡ Quick Actions</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8 md:mb-12">
+          <section>
+            <h2 className="text-3xl font-bold text-white mb-8">⚡ Quick Actions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <Link
                 href="/matches"
-                className="group relative bg-linear-to-br from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-105 border border-blue-400/20"
+                className="relative overflow-hidden rounded-xl border border-blue-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8 group hover:border-blue-400/80 transition-all cursor-pointer"
               >
-                <div className="flex flex-col">
-                  <div className="text-4xl md:text-5xl mb-3 group-hover:scale-110 transition">🎯</div>
-                  <h4 className="font-bold text-lg md:text-2xl mb-2">Matches</h4>
-                  <p className="text-blue-100 text-xs md:text-sm">Create new or view existing matches</p>
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between mb-4">
+                    <h3 className="text-3xl font-bold text-white">🎯 Matches</h3>
+                  </div>
+                  <p className="text-slate-400 mb-4">Create new or view existing matches</p>
+                  <span className="text-blue-400 font-bold group-hover:text-blue-300 transition flex items-center gap-1">
+                    Go to Matches <span className="group-hover:translate-x-1 transition">→</span>
+                  </span>
                 </div>
               </Link>
 
               <Link
                 href="/teams"
-                className="group relative bg-linear-to-br from-emerald-600 to-emerald-800 hover:from-emerald-700 hover:to-emerald-900 text-white rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-105 border border-emerald-400/20"
+                className="relative overflow-hidden rounded-xl border border-green-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8 group hover:border-green-400/80 transition-all cursor-pointer"
               >
-                <div className="flex flex-col">
-                  <div className="text-4xl md:text-5xl mb-3 group-hover:scale-110 transition">👥</div>
-                  <h4 className="font-bold text-lg md:text-2xl mb-2">Teams</h4>
-                  <p className="text-emerald-100 text-xs md:text-sm">Manage and create teams for matches</p>
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between mb-4">
+                    <h3 className="text-3xl font-bold text-white">👥 Teams</h3>
+                  </div>
+                  <p className="text-slate-400 mb-4">Manage and create teams for matches</p>
+                  <span className="text-green-400 font-bold group-hover:text-green-300 transition flex items-center gap-1">
+                    Go to Teams <span className="group-hover:translate-x-1 transition">→</span>
+                  </span>
                 </div>
               </Link>
             </div>
-          </>
+          </section>
         )}
       </main>
     </div>

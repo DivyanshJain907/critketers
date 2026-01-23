@@ -125,14 +125,14 @@ export default function TeamDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-cyan-300 text-lg">Loading team details...</div>
       </div>
     );
   }
   if (!team) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-red-400 text-lg">❌ Team not found</div>
       </div>
     );
@@ -169,89 +169,107 @@ export default function TeamDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-950 via-blue-950 to-slate-900">
-      {/* Modern Header */}
-      <header className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-500 text-white shadow-2xl sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-5 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <Link href="/teams" className="text-white/70 hover:text-white transition text-2xl">←</Link>
+    <div className="min-h-screen bg-slate-950 text-white overflow-hidden">
+      {/* Animated Background */}
+      <div className="pointer-events-none">
+        {/* Dot Pattern */}
+        <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="dots" x="30" y="30" width="30" height="30" patternUnits="userSpaceOnUse">
+              <circle cx="15" cy="15" r="1.5" fill="#06b6d4"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#dots)"/>
+        </svg>
+      </div>
+
+      {/* Header */}
+      <header className="z-50 border-b border-slate-800 backdrop-blur-md bg-slate-950/50 h-24 sticky top-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 flex justify-between items-center h-full">
+          <div className="flex items-center space-x-3">
+            <Link href="/teams" className="px-6 py-2.5 text-sm font-semibold text-white bg-linear-to-r from-blue-600 to-cyan-600 rounded-lg hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50">
+              ← Back
+            </Link>
+            <img src="/logo.png" alt="CricKeters" className="h-32 w-32 object-contain -my-4" />
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold">{team.name}</h1>
-              {team.shortCode && <p className="text-cyan-100 text-sm">Code: {team.shortCode}</p>}
+              <h1 className="text-2xl font-black bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">{team.name}</h1>
+              {team.shortCode && <p className="text-xs text-slate-400 font-semibold tracking-widest">Code: {team.shortCode}</p>}
             </div>
           </div>
-          <div className="text-3xl">🏏</div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-12">
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Add Player Form */}
-        <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl border border-cyan-400/20 mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-2">
-            ➕ Add New Player
-          </h2>
-          <form onSubmit={handleAddPlayer} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-cyan-300 mb-2">Player Name</label>
-                <input
-                  type="text"
-                  value={newPlayerName}
-                  onChange={(e) => setNewPlayerName(e.target.value)}
-                  placeholder="e.g., Virat Kohli"
-                  className="w-full px-4 py-3 bg-slate-700/50 border border-cyan-500/30 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
-                  required
-                />
+        <section className="mb-12">
+          <div className="relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8">
+            <h2 className="text-3xl font-bold text-white mb-8">➕ Add New Player</h2>
+            <form onSubmit={handleAddPlayer} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-bold text-cyan-300 mb-3">Player Name</label>
+                  <input
+                    type="text"
+                    value={newPlayerName}
+                    onChange={(e) => setNewPlayerName(e.target.value)}
+                    placeholder="e.g., Virat Kohli"
+                    className="w-full px-4 py-3 bg-slate-700/50 border border-cyan-500/30 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-cyan-300 mb-3">Jersey No</label>
+                  <input
+                    type="number"
+                    value={newPlayerJerseyNo}
+                    onChange={(e) => setNewPlayerJerseyNo(e.target.value)}
+                    placeholder="e.g., 18"
+                    className="w-full px-4 py-3 bg-slate-700/50 border border-cyan-500/30 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button
+                    type="submit"
+                    disabled={isAddingPlayer}
+                    className={`w-full font-bold py-3 px-4 rounded-lg transition-all shadow-lg ${
+                      isAddingPlayer
+                        ? 'bg-slate-600 cursor-not-allowed text-slate-300'
+                        : 'bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white hover:shadow-cyan-500/50'
+                    }`}
+                  >
+                    {isAddingPlayer ? '⏳ Adding...' : '✓ Add Player'}
+                  </button>
+                </div>
               </div>
-              <div className="flex items-end">
-                <button
-                  type="submit"
-                  disabled={isAddingPlayer}
-                  className={`w-full font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg ${
-                    isAddingPlayer
-                      ? 'bg-gray-600 cursor-not-allowed text-gray-300'
-                      : 'bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white'
-                  }`}
-                >
-                  {isAddingPlayer ? '⏳ Adding...' : '✓ Add'}
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-
-        {/* Squad Stats */}
-        <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 shadow-xl border border-cyan-400/20 mb-8">
-          <p className="text-cyan-300 text-lg">
-            👥 Total Players: <span className="text-white font-bold text-2xl">{team.players?.length || 0}</span>
-          </p>
-        </div>
+            </form>
+          </div>
+        </section>
 
         {/* Players List */}
-        <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-2">
-            🏏 Squad
+        <section className="mb-12">
+          <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
+            <span className="text-cyan-400">👥</span> Squad Members
           </h2>
           {team.players && team.players.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {team.players.map((player) => (
                 <div
                   key={player.id}
-                  className="group relative bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-6 md:p-8 border border-cyan-400/20 shadow-xl hover:shadow-2xl hover:border-cyan-400/50 transition-all duration-300 h-full"
+                  className="group relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-6 hover:shadow-lg hover:shadow-cyan-500/20 transition-all"
                 >
-                  <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-linear-to-r from-cyan-500/0 to-blue-500/0 group-hover:from-cyan-500/10 group-hover:to-blue-500/10 transition duration-300"></div>
-                  <div className="relative">
-                    <div className="flex justify-between items-start mb-4">
+                  <div className="absolute inset-0 bg-linear-to-br from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative z-10">
+                    <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
+                        <h3 className="text-xl font-bold text-white">
                           {player.jerseyNo && <span className="text-cyan-400">#{player.jerseyNo} </span>}
                           {player.name}
                         </h3>
                       </div>
                       <button
                         onClick={() => handleDeletePlayer(player.id)}
-                        className="text-red-400 hover:text-red-300 hover:bg-red-500/20 p-2 rounded-lg transition duration-300 font-bold text-lg"
+                        className="ml-2 p-2 rounded-lg transition-all bg-red-600/20 hover:bg-red-600/40 text-red-400 hover:text-red-300 font-bold"
                         title="Delete player"
                       >
                         ✕
@@ -262,12 +280,12 @@ export default function TeamDetailPage() {
               ))}
             </div>
           ) : (
-            <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl md:rounded-2xl p-8 md:p-12 text-center border border-cyan-400/20 shadow-xl">
+            <div className="rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-12 text-center">
               <div className="text-6xl mb-4">👥</div>
               <p className="text-cyan-300 text-lg">No players added yet. Add your first player above!</p>
             </div>
           )}
-        </div>
+        </section>
       </main>
     </div>
   );

@@ -68,10 +68,10 @@ export default function LoginPage() {
       </div>
 
       {/* Header */}
-      <header className="relative z-10 border-b border-slate-800 backdrop-blur-md bg-slate-950/50">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-5 flex justify-between items-center gap-2">
+      <header className="relative z-10 border-b border-slate-800 backdrop-blur-md bg-slate-950/50 h-24 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-0 flex justify-between items-center gap-2 h-full">
           <Link href="/" className="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition min-w-0">
-            <div className="text-2xl sm:text-4xl">🏏</div>
+            <img src="/logo.png" alt="CricKeters" className="h-32 w-32 object-contain -my-4" />
             <div className="hidden sm:block">
               <h1 className="text-lg sm:text-2xl font-black bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent truncate">CricKeters</h1>
               <p className="text-xs text-slate-400 font-semibold tracking-widest">LIVE MATCH SCORES</p>
@@ -88,7 +88,6 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Welcome Section */}
           <div className="text-center mb-8 sm:mb-12">
-            <div className="text-5xl sm:text-6xl mb-3 sm:mb-4">🏏</div>
             <h2 className="text-3xl sm:text-4xl font-black bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2 sm:mb-3">
               🔐 Empire Login
             </h2>

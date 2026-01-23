@@ -129,21 +129,15 @@ export default function LiveScorePage() {
       </div>
 
       {/* Header */}
-      <header className="z-10 border-b border-slate-800 backdrop-blur-md bg-slate-950/50 sticky top-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center mb-3">
-            <Link href="/" className="text-blue-400 hover:text-blue-300 text-sm font-medium">
-              ← Back to Home
-            </Link>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-xs font-semibold text-green-400">LIVE</span>
-            </div>
+      <header className="z-10 border-b border-slate-800 backdrop-blur-md bg-slate-950/50 h-24 overflow-hidden sticky top-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 flex justify-between items-center h-full">
+          <Link href="/" className="text-blue-400 hover:text-blue-300 text-sm font-medium">
+            ← Back to Home
+          </Link>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="text-xs font-semibold text-green-400">LIVE</span>
           </div>
-          <h1 className="text-3xl font-black text-white">
-            🏏 {match.teamA.name} vs {match.teamB.name}
-          </h1>
-          <p className="text-sm text-slate-400 mt-1">Match Status: {match.status}</p>
         </div>
       </header>
 

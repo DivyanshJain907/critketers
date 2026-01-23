@@ -79,7 +79,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-white overflow-hidden">
       {/* Animated Background */}
-      <div>
+      <div className="pointer-events-none">
         {/* Dot Pattern */}
         <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -96,10 +96,10 @@ export default function LandingPage() {
       </div>
 
       {/* Header */}
-      <header className="relative z-10 border-b border-slate-800 backdrop-blur-md bg-slate-950/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex justify-between items-center">
+      <header className="relative z-50 border-b border-slate-800 backdrop-blur-md bg-slate-950/50 h-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 flex justify-between items-center h-full">
           <div className="flex items-center space-x-3">
-            <div className="text-4xl">🏏</div>
+            <img src="/logo.png" alt="CricKeters" className="h-32 w-32 object-contain -my-4" />
             <div>
               <h1 className="text-2xl font-black bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">CricKeters</h1>
               <p className="text-xs text-slate-400 font-semibold tracking-widest">LIVE MATCH SCORES</p>
