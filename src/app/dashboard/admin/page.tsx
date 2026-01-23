@@ -360,7 +360,7 @@ export default function AdminDashboard() {
                             ? 'bg-cyan-500/20 border border-cyan-400/50 text-cyan-300' 
                             : 'bg-blue-500/20 border border-blue-400/50 text-blue-300'
                         }`}>
-                          {user.role === 'ADMIN' ? '🔧 ADMIN' : '👨‍⚖️ EMPIRE'}
+                          {user.role === 'ADMIN' ? '🔧 ADMIN' : '👨‍⚖️ UMPIRE'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-cyan-300/70">
@@ -374,7 +374,7 @@ export default function AdminDashboard() {
                               onChange={(e) => updateUserRole(user.id, e.target.value)}
                               className="px-3 py-1.5 bg-slate-700/50 border border-cyan-500/30 rounded font-semibold text-white hover:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition cursor-pointer text-xs"
                             >
-                              <option value="UMPIRE">👨‍⚖️ EMPIRE</option>
+                              <option value="UMPIRE">👨‍⚖️ UMPIRE</option>
                               <option value="ADMIN">🔧 ADMIN</option>
                             </select>
                             <button
@@ -415,7 +415,7 @@ export default function AdminDashboard() {
                 <h4 className="text-4xl font-bold text-blue-400">{users.filter(u => u.role === 'ADMIN').length}</h4>
               </div>
               <div className="text-center">
-                <p className="text-green-300 text-sm font-semibold mb-2">Empires</p>
+                <p className="text-green-300 text-sm font-semibold mb-2">Umpires</p>
                 <h4 className="text-4xl font-bold text-green-400">{users.filter(u => u.role === 'UMPIRE').length}</h4>
               </div>
               <div className="text-center">

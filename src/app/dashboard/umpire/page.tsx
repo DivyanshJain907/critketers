@@ -22,7 +22,7 @@ export default function UmpireDashboard() {
       return;
     }
 
-    setUserName(name || 'Empire');
+    setUserName(name || 'Umpire');
     fetchData();
   }, [router]);
 
@@ -100,7 +100,7 @@ export default function UmpireDashboard() {
             <img src="/logo.png" alt="CricKeters" className="h-20 w-20 sm:h-32 sm:w-32 object-contain sm:-my-4" />
             <div className="hidden sm:block">
               <h1 className="text-2xl font-black bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Cricket Scoring</h1>
-              <p className="text-xs text-slate-400 font-semibold tracking-widest">EMPIRE CONTROL</p>
+              <p className="text-xs text-slate-400 font-semibold tracking-widest">UMPIRE CONTROL</p>
             </div>
           </div>
 
@@ -119,7 +119,7 @@ export default function UmpireDashboard() {
               <div className="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 text-white rounded-lg shadow-xl py-2 z-50">
                 <div className="px-4 py-3 border-b border-slate-700">
                   <p className="font-semibold text-sm">{userName}</p>
-                  <p className="text-xs text-slate-400">👨‍⚖️ Empire</p>
+                  <p className="text-xs text-slate-400">👨‍⚖️ Umpire</p>
                 </div>
                 <button
                   onClick={() => {

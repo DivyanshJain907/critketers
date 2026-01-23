@@ -18,6 +18,7 @@ export default function LandingPage() {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
   const [liveMatches, setLiveMatches] = useState<Match[]>([]);
   const [previousMatches, setPreviousMatches] = useState<Match[]>([]);
   const [totalPreviousMatches, setTotalPreviousMatches] = useState(0);
@@ -46,6 +47,7 @@ export default function LandingPage() {
   useEffect(() => {
     // Fetch matches from API
     const fetchMatches = async () => {
+      setDataLoading(true);
       try {
         const response = await fetch('/api/matches');
         const data = await response.json();
@@ -66,6 +68,8 @@ export default function LandingPage() {
         }
       } catch (error) {
         console.error('Failed to fetch matches:', error);
+      } finally {
+        setDataLoading(false);
       }
     };
 
@@ -107,7 +111,7 @@ export default function LandingPage() {
           </div>
           <nav className="flex items-center">
             <Link href="/login" className="px-3 sm:px-6 py-3 sm:py-2.5 text-xs sm:text-sm font-semibold text-white bg-linear-to-r from-blue-600 to-cyan-600 rounded-lg hover:from-blue-500 hover:to-cyan-500 transition-all shadow-lg hover:shadow-blue-500/50 whitespace-nowrap">
-              🔐 Empire Login
+              🔐 Umpire Login
             </Link>
           </nav>
         </div>
@@ -118,7 +122,27 @@ export default function LandingPage() {
         {/* Live Matches Section */}
         <section className="mb-20">
           <h2 className="text-4xl font-black mb-8 text-white">🔴 Live Matches</h2>
-          {liveMatches.length > 0 ? (
+          {dataLoading ? (
+            // Loading Skeleton
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[1, 2].map((i) => (
+                <div key={i} className="relative overflow-hidden rounded-xl border border-green-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-6 animate-pulse">
+                  <div className="absolute top-0 right-0 px-3 py-1 bg-linear-to-r from-green-600 to-emerald-600 rounded-bl-lg text-xs font-bold">
+                    LIVE
+                  </div>
+                  <div className="space-y-4">
+                    <div className="h-6 bg-slate-700/50 rounded w-3/4"></div>
+                    <div className="h-3 bg-slate-700/50 rounded w-1/2"></div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="h-24 bg-slate-700/50 rounded"></div>
+                      <div className="h-24 bg-slate-700/50 rounded"></div>
+                    </div>
+                    <div className="h-10 bg-slate-700/50 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : liveMatches.length > 0 ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {liveMatches.slice(liveMatchesPage * matchesPerPage, (liveMatchesPage + 1) * matchesPerPage).map((match) => (
@@ -192,7 +216,24 @@ export default function LandingPage() {
         {/* Previous Matches Section */}
         <section>
           <h2 className="text-3xl sm:text-4xl font-black mb-8 text-white">📊 Previous Matches</h2>
-          {previousMatches.length > 0 ? (
+          {dataLoading ? (
+            // Loading Skeleton
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="relative overflow-hidden rounded-xl border border-slate-700 bg-linear-to-br from-slate-900/80 to-slate-800/50 p-4 sm:p-6 animate-pulse">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    <div className="space-y-2">
+                      <div className="h-5 bg-slate-700/50 rounded w-3/4"></div>
+                      <div className="h-3 bg-slate-700/50 rounded w-1/2"></div>
+                    </div>
+                    <div className="h-8 bg-slate-700/50 rounded"></div>
+                    <div className="h-8 bg-slate-700/50 rounded"></div>
+                    <div className="h-8 bg-slate-700/50 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : previousMatches.length > 0 ? (
             <>
               <div className="space-y-4">
                 {previousMatches.map((match) => (

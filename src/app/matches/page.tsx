@@ -163,7 +163,7 @@ export default function MatchesPage() {
           </div>
         )}
 
-        {/* Create Match Button - Only for Empire/Admin */}
+        {/* Create Match Button - Only for Umpire/Admin */}
         {(userRole === 'UMPIRE' || userRole === 'ADMIN') && (
           <section className="mb-8 sm:mb-12">
             <button

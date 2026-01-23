@@ -75,6 +75,9 @@ interface Match {
   teamA: Team;
   teamB: Team;
   innings: Innings[];
+  endComment?: string;
+  endedBy?: string;
+  endedAt?: string;
 }
 
 export default function MatchDetailPage() {
@@ -100,6 +103,9 @@ export default function MatchDetailPage() {
     wicketType: 'BOWLED',
     fielderId: '',
   });
+  const [showEndMatchForm, setShowEndMatchForm] = useState(false);
+  const [endMatchComment, setEndMatchComment] = useState('');
+  const [undoTimeRemaining, setUndoTimeRemaining] = useState(0);
 
   // Check authentication on mount
   useEffect(() => {
@@ -466,6 +472,102 @@ export default function MatchDetailPage() {
     return allOut || oversDone;
   };
 
+  const handleEndMatch = async () => {
+    if (!match) return;
+    
+    if (!endMatchComment.trim()) {
+      setError('Please provide a comment for ending the match');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`/api/matches/${matchId}/end-match`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          comment: endMatchComment,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setError('');
+        setShowEndMatchForm(false);
+        setEndMatchComment('');
+        // Refetch match data
+        fetchMatch();
+      } else {
+        setError(data.error || 'Failed to end match');
+      }
+    } catch (error) {
+      console.error('Error ending match:', error);
+      setError('Error ending match: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUndoCancellation = async () => {
+    if (!match) return;
+
+    setIsSaving(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`/api/matches/${matchId}/undo-cancellation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setError('');
+        setUndoTimeRemaining(0);
+        // Refetch match data
+        fetchMatch();
+      } else {
+        setError(data.error || 'Failed to undo match cancellation');
+      }
+    } catch (error) {
+      console.error('Error undoing cancellation:', error);
+      setError('Error undoing cancellation: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Timer for undo cancellation (5 minutes)
+  useEffect(() => {
+    if (!match || match.status !== 'COMPLETED' || !match.endedAt) {
+      setUndoTimeRemaining(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      if (!match.endedAt) return;
+      const endedAt = new Date(match.endedAt).getTime();
+      const now = new Date().getTime();
+      const secondsRemaining = Math.max(0, 300 - Math.floor((now - endedAt) / 1000));
+      
+      setUndoTimeRemaining(secondsRemaining);
+
+      if (secondsRemaining === 0) {
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [match?.status, match?.endedAt]);
+
   const computeResult = () => {
     if (!match || match.innings.length < 2) return null;
 
@@ -683,6 +785,47 @@ export default function MatchDetailPage() {
           </div>
         )}
 
+        {/* Match Completed Banner */}
+        {match && match.status === 'COMPLETED' && (
+          <div className="mb-8 p-6 rounded-xl border-2 border-red-500/50 bg-linear-to-br from-red-900/30 to-slate-900/50 shadow-lg">
+            <div className="flex items-start gap-4">
+              <div className="text-4xl">🏁</div>
+              <div className="flex-1">
+                <h3 className="text-2xl font-bold text-red-300 mb-2">Match Completed</h3>
+                <p className="text-slate-300 mb-2">
+                  Ended by: <span className="font-bold text-white">{match.endedBy || 'Umpire'}</span>
+                </p>
+                {match.endComment && (
+                  <p className="text-slate-200 bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+                    <span className="text-amber-300 font-bold">Reason:</span> {match.endComment}
+                  </p>
+                )}
+                {match.endedAt && (
+                  <p className="text-slate-400 text-sm mt-2">
+                    Ended: {new Date(match.endedAt).toLocaleString()}
+                  </p>
+                )}
+                
+                {/* Undo Button - Only if within 5 minutes */}
+                {undoTimeRemaining > 0 && (
+                  <div className="mt-4 flex gap-2">
+                    <button
+                      onClick={handleUndoCancellation}
+                      disabled={isSaving}
+                      className="px-4 py-2 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold transition shadow-lg text-sm"
+                    >
+                      {isSaving ? '⏳ Undoing...' : '↩️ Undo Cancellation'}
+                    </button>
+                    <span className="text-amber-300 font-bold text-sm self-center">
+                      ⏱️ {Math.floor(undoTimeRemaining / 60)}:{String(undoTimeRemaining % 60).padStart(2, '0')}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {!match ? (
           <div className="text-center text-slate-400 py-16">⏳ Loading match data...</div>
         ) : matchComplete ? (
@@ -856,7 +999,8 @@ export default function MatchDetailPage() {
                       <select
                         value={strikerPlayerId}
                         onChange={(e) => setStrikerPlayerId(e.target.value)}
-                        className="w-full px-3 py-2 md:py-3 bg-slate-800 border border-cyan-400/40 text-white rounded-lg focus:outline-none focus:border-cyan-300 focus:ring-1 focus:ring-cyan-400/50 text-xs md:text-sm hover:border-cyan-400/60 transition"
+                        disabled={match?.status === 'COMPLETED'}
+                        className="w-full px-3 py-2 md:py-3 bg-slate-800 border border-cyan-400/40 text-white rounded-lg focus:outline-none focus:border-cyan-300 focus:ring-1 focus:ring-cyan-400/50 text-xs md:text-sm hover:border-cyan-400/60 transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <option value="">🏏 Striker</option>
                     {match.innings[selectedInnings].teamId && match.teamA.id === match.innings[selectedInnings].teamId
@@ -890,7 +1034,8 @@ export default function MatchDetailPage() {
                       <select
                         value={nonStrikerPlayerId}
                         onChange={(e) => setNonStrikerPlayerId(e.target.value)}
-                        className="w-full px-3 py-2 md:py-3 bg-slate-800 border border-blue-400/40 text-white rounded-lg focus:outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-400/50 text-xs md:text-sm hover:border-blue-400/60 transition"
+                        disabled={match?.status === 'COMPLETED'}
+                        className="w-full px-3 py-2 md:py-3 bg-slate-800 border border-blue-400/40 text-white rounded-lg focus:outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-400/50 text-xs md:text-sm hover:border-blue-400/60 transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <option value="">👥 Non-Striker</option>
                     {match.innings[selectedInnings].teamId && match.teamA.id === match.innings[selectedInnings].teamId
@@ -924,7 +1069,8 @@ export default function MatchDetailPage() {
                       <select
                         value={bowlerId}
                         onChange={(e) => setBowlerId(e.target.value)}
-                        className="w-full px-3 py-2 md:py-3 bg-slate-800 border border-emerald-400/40 text-white rounded-lg focus:outline-none focus:border-emerald-300 focus:ring-1 focus:ring-emerald-400/50 text-xs md:text-sm hover:border-emerald-400/60 transition"
+                        disabled={match?.status === 'COMPLETED'}
+                        className="w-full px-3 py-2 md:py-3 bg-slate-800 border border-emerald-400/40 text-white rounded-lg focus:outline-none focus:border-emerald-300 focus:ring-1 focus:ring-emerald-400/50 text-xs md:text-sm hover:border-emerald-400/60 transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <option value="">⚾ Bowler</option>
                         {match.innings[selectedInnings].teamId && match.teamA.id === match.innings[selectedInnings].teamId
@@ -950,7 +1096,7 @@ export default function MatchDetailPage() {
                     <div>
                       <button
                         onClick={handleCompleteBall}
-                        disabled={isSaving || isOverLimitReached}
+                        disabled={isSaving || isOverLimitReached || match?.status === 'COMPLETED'}
                         className="w-full bg-linear-to-br from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-2xl p-6 md:p-8 mb-4 text-center shadow-2xl border border-cyan-400/20 transition transform hover:scale-105 active:scale-95 disabled:opacity-50 active:shadow-lg"
                       >
                         <p className="text-xs md:text-sm font-semibold mb-2 opacity-90">TAP TO COMPLETE BALL</p>
@@ -991,7 +1137,8 @@ export default function MatchDetailPage() {
                     <button
                       key={btn.runs}
                       onClick={() => handleAddRuns(btn.runs)}
-                      className={`bg-linear-to-br ${btn.gradient} text-white font-bold py-3 md:py-5 rounded-xl text-sm md:text-xl transition shadow-lg border`}
+                      disabled={match?.status === 'COMPLETED'}
+                      className={`bg-linear-to-br ${btn.gradient} text-white font-bold py-3 md:py-5 rounded-xl text-sm md:text-xl transition shadow-lg border disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       {btn.label}
                     </button>
@@ -1002,7 +1149,8 @@ export default function MatchDetailPage() {
                 <div className="mb-4">
                   <button
                     onClick={() => handleAddRuns(-1)}
-                    className="w-full bg-linear-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-3 md:py-4 rounded-xl transition text-sm md:text-base shadow-lg border border-red-400/20"
+                    disabled={match?.status === 'COMPLETED'}
+                    className="w-full bg-linear-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-xl transition text-sm md:text-base shadow-lg border border-red-400/20"
                   >
                     ➖ Undo
                   </button>
@@ -1012,28 +1160,28 @@ export default function MatchDetailPage() {
                 <div className="grid grid-cols-4 gap-2 mb-4">
                   <button
                     onClick={() => handleRecordExtra('WIDE')}
-                    disabled={isSaving}
+                    disabled={isSaving || match?.status === 'COMPLETED'}
                     className="bg-linear-to-br from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-lg text-xs md:text-sm transition shadow-lg"
                   >
                     Wide
                   </button>
                   <button
                     onClick={() => handleRecordExtra('NO_BALL')}
-                    disabled={isSaving}
+                    disabled={isSaving || match?.status === 'COMPLETED'}
                     className="bg-linear-to-br from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-lg text-xs md:text-sm transition shadow-lg"
                   >
                     No Ball
                   </button>
                   <button
                     onClick={() => handleRecordExtra('BYE')}
-                    disabled={isSaving}
+                    disabled={isSaving || match?.status === 'COMPLETED'}
                     className="bg-linear-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-lg text-xs md:text-sm transition shadow-lg"
                   >
                     Bye
                   </button>
                   <button
                     onClick={() => handleRecordExtra('LEG_BYE')}
-                    disabled={isSaving}
+                    disabled={isSaving || match?.status === 'COMPLETED'}
                     className="bg-linear-to-br from-pink-600 to-pink-700 hover:from-pink-700 hover:to-pink-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-lg text-xs md:text-sm transition shadow-lg"
                   >
                     Leg Bye
@@ -1046,10 +1194,19 @@ export default function MatchDetailPage() {
                     setShowWicketForm(true);
                     setWicketForm({ playerOutId: strikerPlayerId, wicketType: 'BOWLED', fielderId: '' });
                   }}
-                  disabled={isSaving || !bowlerId}
+                  disabled={isSaving || !bowlerId || match?.status === 'COMPLETED'}
                   className="w-full bg-linear-to-br from-red-700 to-red-800 hover:from-red-800 hover:to-red-900 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-xl text-sm md:text-base mb-4 transition shadow-lg border border-red-400/20"
                 >
                   🎯 Wicket
+                </button>
+
+                {/* End Match Button */}
+                <button 
+                  onClick={() => setShowEndMatchForm(true)}
+                  disabled={isSaving || match?.status === 'COMPLETED'}
+                  className="w-full bg-linear-to-br from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-xl text-sm md:text-base mb-4 transition shadow-lg border border-slate-400/20"
+                >
+                  ⏹️ End Match
                 </button>
 
                 {/* Wicket Form Modal */}
@@ -1187,6 +1344,47 @@ export default function MatchDetailPage() {
                           className="flex-1 bg-linear-to-br from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold py-3 rounded-lg transition text-sm md:text-base shadow-lg"
                         >
                           Continue
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* End Match Form Modal */}
+                {showEndMatchForm && match.innings[selectedInnings] && (
+                  <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-3 md:p-4">
+                    <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-2xl p-6 border border-red-400/40 max-w-md w-full shadow-2xl">
+                      <h3 className="text-white text-lg md:text-xl font-bold mb-2">⏹️ End Match</h3>
+                      <p className="text-gray-300 text-sm md:text-base mb-4">Are you sure you want to end this match? Please provide a comment.</p>
+                      
+                      <div className="mb-4">
+                        <label className="text-white text-xs md:text-sm font-bold mb-2 block">💬 Comment (visible to users)</label>
+                        <textarea
+                          value={endMatchComment}
+                          onChange={(e) => setEndMatchComment(e.target.value)}
+                          placeholder="e.g., Match abandoned due to weather, Technical issue, etc."
+                          className="w-full bg-slate-700 text-white rounded-lg p-3 border border-red-400/40 focus:outline-none focus:border-red-300 text-xs md:text-sm resize-none"
+                          rows={4}
+                        />
+                      </div>
+
+                      {/* Buttons */}
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => {
+                            setShowEndMatchForm(false);
+                            setEndMatchComment('');
+                          }}
+                          className="flex-1 bg-linear-to-br from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white font-bold py-3 rounded-lg transition text-sm md:text-base"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleEndMatch}
+                          disabled={isSaving || !endMatchComment.trim()}
+                          className="flex-1 bg-linear-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 rounded-lg transition text-sm md:text-base shadow-lg"
+                        >
+                          {isSaving ? '⏳ Ending...' : 'End Match'}
                         </button>
                       </div>
                     </div>

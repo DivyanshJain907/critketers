@@ -39,7 +39,7 @@ export default function SignupPage() {
       localStorage.setItem('userId', data.userId);
       localStorage.setItem('userName', data.name);
 
-      // Redirect to empire dashboard
+      // Redirect to umpire dashboard
       router.push('/dashboard/umpire');
     } catch (err) {
       setError('An error occurred. Please try again.');
