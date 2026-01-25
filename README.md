@@ -1,4 +1,4 @@
-# 🏏 Cricket Umpire Scoring & Match Recording System
+# 🏏 Cricket Umpire Scoring and Match Recording System
 
 A professional cricket match data recording web application designed for umpires to quickly and accurately log live match events. Built with **Next.js + PostgreSQL + Prisma**.
 
@@ -138,7 +138,7 @@ Visit `http://localhost:3000`
 - `POST /api/matches/[id]/innings/[inningsId]/wickets` - Record wicket
 - `POST /api/matches/[id]/innings/[inningsId]/extras` - Record extras
 
-## 📊 Statistics Features
+## 📊 Statistics Feature
 
 ### Player Statistics
 - Runs, balls faced, strike rate
