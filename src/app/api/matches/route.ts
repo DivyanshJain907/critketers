@@ -1,9 +1,14 @@
-import { getMatchesCollection, getTeamsCollection, getInningsCollection } from "@/lib/mongodb";
+import {
+  getMatchesCollection,
+  getTeamsCollection,
+  getInningsCollection,
+} from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET =
+  process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 // GET /api/matches - Get all matches
 export async function GET(request: NextRequest) {
@@ -13,14 +18,17 @@ export async function GET(request: NextRequest) {
     const inningsCollection = await getInningsCollection();
 
     // Get user role and ID from request headers
-    let userRole = 'VIEWER';
+    let userRole = "VIEWER";
     let userId = null;
 
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     if (authHeader) {
       try {
-        const token = authHeader.replace('Bearer ', '');
-        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+        const token = authHeader.replace("Bearer ", "");
+        const decoded = jwt.verify(token, JWT_SECRET) as {
+          userId: string;
+          role: string;
+        };
         userRole = decoded.role;
         userId = decoded.userId;
       } catch (error) {
@@ -30,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     // Build query filter
     let query: any = {};
-    if (userRole === 'UMPIRE' && userId) {
+    if (userRole === "UMPIRE" && userId) {
       // Umpires can only see their own matches
       query.umpireId = userId;
     }
@@ -57,6 +65,20 @@ export async function GET(request: NextRequest) {
           .sort({ inningNumber: 1 })
           .toArray();
 
+        // Auto-complete match if both innings are finished and status is still ONGOING
+        if (
+          match.status === "ONGOING" &&
+          innings.length >= 2 &&
+          innings[0].status === "COMPLETED" &&
+          innings[1].status === "COMPLETED"
+        ) {
+          await matchesCollection.updateOne(
+            { _id: match._id },
+            { $set: { status: "COMPLETED", updatedAt: new Date() } },
+          );
+          match.status = "COMPLETED";
+        }
+
         return {
           ...match,
           _id: match._id?.toString(),
@@ -65,7 +87,7 @@ export async function GET(request: NextRequest) {
           teamB: teamB ? { ...teamB, id: teamB._id?.toString() } : null,
           innings: innings || [],
         };
-      })
+      }),
     );
 
     return NextResponse.json(matchesWithDetails);
@@ -73,7 +95,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching matches:", error);
     return NextResponse.json(
       { error: "Failed to fetch matches" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -82,50 +104,47 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Get umpire ID from auth token
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     let umpireId = null;
 
     if (authHeader) {
       try {
-        const token = authHeader.replace('Bearer ', '');
-        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
-        if (decoded.role === 'UMPIRE' || decoded.role === 'ADMIN') {
+        const token = authHeader.replace("Bearer ", "");
+        const decoded = jwt.verify(token, JWT_SECRET) as {
+          userId: string;
+          role: string;
+        };
+        if (decoded.role === "UMPIRE" || decoded.role === "ADMIN") {
           umpireId = decoded.userId;
         }
       } catch (error) {
         return NextResponse.json(
-          { error: 'Invalid or expired token' },
-          { status: 401 }
+          { error: "Invalid or expired token" },
+          { status: 401 },
         );
       }
     } else {
       return NextResponse.json(
-        { error: 'Authorization required' },
-        { status: 401 }
+        { error: "Authorization required" },
+        { status: 401 },
       );
     }
 
     const body = await request.json();
-    const {
-      name,
-      teamAId,
-      teamBId,
-      tossWinnerId,
-      tossDecision,
-      oversLimit,
-    } = body;
+    const { name, teamAId, teamBId, tossWinnerId, tossDecision, oversLimit } =
+      body;
 
     if (!teamAId || !teamBId) {
       return NextResponse.json(
         { error: "Team A and Team B are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (teamAId === teamBId) {
       return NextResponse.json(
         { error: "Teams must be different" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -144,7 +163,7 @@ export async function POST(request: NextRequest) {
     if (!teamA || !teamB) {
       return NextResponse.json(
         { error: "One or both teams not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -182,7 +201,7 @@ export async function POST(request: NextRequest) {
     console.error("Error creating match:", error);
     return NextResponse.json(
       { error: "Failed to create match" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

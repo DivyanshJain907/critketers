@@ -9,12 +9,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET =
+  process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 // POST /api/matches/[id]/innings/[inningsId]/balls - Record a new ball
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; inningsId: string }> }
+  { params }: { params: Promise<{ id: string; inningsId: string }> },
 ) {
   try {
     const { id, inningsId } = await params;
@@ -37,7 +38,7 @@ export async function POST(
     ) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -45,7 +46,7 @@ export async function POST(
     if (ballType === "LEGAL" && (runs < 0 || runs > 6)) {
       return NextResponse.json(
         { error: "Runs must be between 0 and 6 for legal balls" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -61,21 +62,21 @@ export async function POST(
     });
 
     if (!match) {
-      return NextResponse.json(
-        { error: "Match not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Match not found" }, { status: 404 });
     }
 
     // Check access control for umpires
-    let userRole = 'VIEWER';
+    let userRole = "VIEWER";
     let userId = null;
 
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     if (authHeader) {
       try {
-        const token = authHeader.replace('Bearer ', '');
-        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+        const token = authHeader.replace("Bearer ", "");
+        const decoded = jwt.verify(token, JWT_SECRET) as {
+          userId: string;
+          role: string;
+        };
         userRole = decoded.role;
         userId = decoded.userId;
       } catch (error) {
@@ -84,10 +85,10 @@ export async function POST(
     }
 
     // Check if umpire is accessing their own match
-    if (userRole === 'UMPIRE' && match.umpireId !== userId) {
+    if (userRole === "UMPIRE" && match.umpireId !== userId) {
       return NextResponse.json(
         { error: "You do not have access to this match" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -97,18 +98,17 @@ export async function POST(
     });
 
     if (!innings) {
-      return NextResponse.json(
-        { error: "Innings not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Innings not found" }, { status: 404 });
     }
 
     // Check if adding this ball would exceed oversLimit
     const maxBalls = match.oversLimit * 6;
     if (innings.totalBalls >= maxBalls) {
       return NextResponse.json(
-        { error: `Over limit reached. Maximum ${match.oversLimit} overs (${maxBalls} balls) allowed.` },
-        { status: 400 }
+        {
+          error: `Over limit reached. Maximum ${match.oversLimit} overs (${maxBalls} balls) allowed.`,
+        },
+        { status: 400 },
       );
     }
 
@@ -168,7 +168,7 @@ export async function POST(
           illegalBalls,
           runs,
         },
-      }
+      },
     );
 
     // Update innings stats
@@ -179,8 +179,41 @@ export async function POST(
           totalRuns: runs,
           totalBalls: 1,
         },
-      }
+      },
     );
+
+    // Check if innings should be marked as complete (reached over limit)
+    const updatedInnings = await inningsCollection.findOne({
+      _id: new ObjectId(inningsId),
+    });
+
+    if (updatedInnings) {
+      let shouldCompleteInnings = false;
+
+      // Check if reached over limit
+      if (updatedInnings.totalBalls >= match.oversLimit * 6) {
+        shouldCompleteInnings = true;
+      }
+
+      // Check if second innings (chasing team) has scored more runs than first innings
+      if (updatedInnings.inningsNumber === 2) {
+        const firstInnings = await inningsCollection.findOne({
+          matchId: id,
+          inningsNumber: 1,
+        });
+
+        if (firstInnings && updatedInnings.totalRuns > firstInnings.totalRuns) {
+          shouldCompleteInnings = true;
+        }
+      }
+
+      if (shouldCompleteInnings) {
+        await inningsCollection.updateOne(
+          { _id: new ObjectId(inningsId) },
+          { $set: { status: "COMPLETED" } },
+        );
+      }
+    }
 
     // Update batting stats for striker
     const existingStats = await battingStatsCollection.findOne({
@@ -197,7 +230,7 @@ export async function POST(
             fours: runs === 4 ? 1 : 0,
             sixes: runs === 6 ? 1 : 0,
           },
-        }
+        },
       );
     } else {
       await battingStatsCollection.insertOne({
@@ -223,13 +256,13 @@ export async function POST(
         nonStrikerPlayerId,
         isWicket: false,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error: any) {
     console.error("Error recording ball:", error);
     return NextResponse.json(
       { error: error.message || "Failed to record ball" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -237,7 +270,7 @@ export async function POST(
 // GET /api/matches/[id]/innings/[inningsId]/balls - Get all balls in innings
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; inningsId: string }> }
+  { params }: { params: Promise<{ id: string; inningsId: string }> },
 ) {
   try {
     const { id, inningsId } = await params;
@@ -260,7 +293,7 @@ export async function GET(
           id: ball._id?.toString(),
           over: over ? { ...over, id: over._id?.toString() } : null,
         };
-      })
+      }),
     );
 
     return NextResponse.json(ballsWithOvers);
@@ -268,7 +301,7 @@ export async function GET(
     console.error("Error fetching balls:", error);
     return NextResponse.json(
       { error: "Failed to fetch balls" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
