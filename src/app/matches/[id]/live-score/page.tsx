@@ -276,7 +276,7 @@ export default function LiveScorePage() {
                 <h3 className="text-lg font-bold text-cyan-300 mb-4 flex items-center gap-2">
                   🏏 Batting Statistics
                 </h3>
-                <div className="overflow-x-auto">
+                <div className="w-full">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-slate-700">
@@ -352,7 +352,7 @@ export default function LiveScorePage() {
                 <h3 className="text-lg font-bold text-emerald-300 mb-4 flex items-center gap-2">
                   ⚾ Bowling Statistics
                 </h3>
-                <div className="overflow-x-auto">
+                <div className="w-full">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-slate-700">
