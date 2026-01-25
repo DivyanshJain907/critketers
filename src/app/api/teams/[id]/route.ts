@@ -3,12 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET =
+  process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 // GET /api/teams/[id] - Get team by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -24,14 +25,17 @@ export async function GET(
     }
 
     // Check access control for umpires
-    let userRole = 'VIEWER';
+    let userRole = "VIEWER";
     let userId = null;
 
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     if (authHeader) {
       try {
-        const token = authHeader.replace('Bearer ', '');
-        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+        const token = authHeader.replace("Bearer ", "");
+        const decoded = jwt.verify(token, JWT_SECRET) as {
+          userId: string;
+          role: string;
+        };
         userRole = decoded.role;
         userId = decoded.userId;
       } catch (error) {
@@ -40,16 +44,14 @@ export async function GET(
     }
 
     // Check if umpire is accessing their own team
-    if (userRole === 'UMPIRE' && team.umpireId !== userId) {
+    if (userRole === "UMPIRE" && team.umpireId !== userId) {
       return NextResponse.json(
         { error: "You do not have access to this team" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
-    const players = await playersCollection
-      .find({ teamId: id })
-      .toArray();
+    const players = await playersCollection.find({ teamId: id }).toArray();
 
     const teamWithPlayers = {
       ...team,
@@ -65,7 +67,7 @@ export async function GET(
     console.error("Error fetching team:", error);
     return NextResponse.json(
       { error: "Failed to fetch team" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -73,11 +75,12 @@ export async function GET(
 // DELETE /api/teams/[id] - Delete team
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
     const teamsCollection = await getTeamsCollection();
+    const playersCollection = await getPlayersCollection();
 
     const team = await teamsCollection.findOne({
       _id: new ObjectId(id),
@@ -88,14 +91,17 @@ export async function DELETE(
     }
 
     // Check access control for umpires
-    let userRole = 'VIEWER';
+    let userRole = "VIEWER";
     let userId = null;
 
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     if (authHeader) {
       try {
-        const token = authHeader.replace('Bearer ', '');
-        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+        const token = authHeader.replace("Bearer ", "");
+        const decoded = jwt.verify(token, JWT_SECRET) as {
+          userId: string;
+          role: string;
+        };
         userRole = decoded.role;
         userId = decoded.userId;
       } catch (error) {
@@ -104,13 +110,19 @@ export async function DELETE(
     }
 
     // Check if umpire is deleting their own team
-    if (userRole === 'UMPIRE' && team.umpireId !== userId) {
+    if (userRole === "UMPIRE" && team.umpireId !== userId) {
       return NextResponse.json(
         { error: "You do not have access to delete this team" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
+    // Delete all players in this team first
+    await playersCollection.deleteMany({
+      teamId: id,
+    });
+
+    // Then delete the team
     const result = await teamsCollection.deleteOne({
       _id: new ObjectId(id),
     });
@@ -124,7 +136,7 @@ export async function DELETE(
     console.error("Error deleting team:", error);
     return NextResponse.json(
       { error: "Failed to delete team" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

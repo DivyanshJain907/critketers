@@ -8,12 +8,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET =
+  process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 // POST /api/matches/[id]/innings/[inningsId]/extras - Record extras
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; inningsId: string }> }
+  { params }: { params: Promise<{ id: string; inningsId: string }> },
 ) {
   try {
     const { id, inningsId } = await params;
@@ -23,7 +24,7 @@ export async function POST(
     if (!extraType || runs === undefined) {
       return NextResponse.json(
         { error: "Extra type and runs are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -38,21 +39,21 @@ export async function POST(
     });
 
     if (!match) {
-      return NextResponse.json(
-        { error: "Match not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Match not found" }, { status: 404 });
     }
 
     // Check access control for umpires
-    let userRole = 'VIEWER';
+    let userRole = "VIEWER";
     let userId = null;
 
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     if (authHeader) {
       try {
-        const token = authHeader.replace('Bearer ', '');
-        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+        const token = authHeader.replace("Bearer ", "");
+        const decoded = jwt.verify(token, JWT_SECRET) as {
+          userId: string;
+          role: string;
+        };
         userRole = decoded.role;
         userId = decoded.userId;
       } catch (error) {
@@ -61,10 +62,10 @@ export async function POST(
     }
 
     // Check if umpire is accessing their own match
-    if (userRole === 'UMPIRE' && match.umpireId !== userId) {
+    if (userRole === "UMPIRE" && match.umpireId !== userId) {
       return NextResponse.json(
         { error: "You do not have access to this match" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -74,18 +75,17 @@ export async function POST(
     });
 
     if (!innings) {
-      return NextResponse.json(
-        { error: "Innings not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Innings not found" }, { status: 404 });
     }
 
     // Check if match is at over limit (extras don't count as balls, but check anyway)
     const maxBalls = match.oversLimit * 6;
     if (innings.totalBalls >= maxBalls) {
       return NextResponse.json(
-        { error: `Over limit reached. Maximum ${match.oversLimit} overs allowed.` },
-        { status: 400 }
+        {
+          error: `Over limit reached. Maximum ${match.oversLimit} overs allowed.`,
+        },
+        { status: 400 },
       );
     }
 
@@ -101,14 +101,14 @@ export async function POST(
     // Update innings total runs only (don't increment totalBalls for extras)
     await inningsCollection.updateOne(
       { _id: new ObjectId(inningsId) },
-      { $inc: { totalRuns: runs } }
+      { $inc: { totalRuns: runs } },
     );
 
     // Update over runs if applicable
     if (overId) {
       await oversCollection.updateOne(
         { _id: new ObjectId(overId) },
-        { $inc: { runs } }
+        { $inc: { runs } },
       );
     }
 
@@ -121,13 +121,13 @@ export async function POST(
         overId,
         createdAt: new Date(),
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Error recording extra:", error);
     return NextResponse.json(
       { error: "Failed to record extra" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -135,7 +135,7 @@ export async function POST(
 // GET /api/matches/[id]/innings/[inningsId]/extras - Get all extras in innings
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; inningsId: string }> }
+  { params }: { params: Promise<{ id: string; inningsId: string }> },
 ) {
   try {
     const { id, inningsId } = await params;
@@ -161,7 +161,7 @@ export async function GET(
           id: extra._id?.toString(),
           over: over ? { ...over, id: over._id?.toString() } : null,
         };
-      })
+      }),
     );
 
     return NextResponse.json(extrasWithOvers);
@@ -169,7 +169,7 @@ export async function GET(
     console.error("Error fetching extras:", error);
     return NextResponse.json(
       { error: "Failed to fetch extras" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

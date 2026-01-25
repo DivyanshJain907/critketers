@@ -10,12 +10,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET =
+  process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 // POST /api/matches/[id]/innings/[inningsId]/wickets - Record a wicket
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; inningsId: string }> }
+  { params }: { params: Promise<{ id: string; inningsId: string }> },
 ) {
   try {
     const { id, inningsId } = await params;
@@ -25,7 +26,7 @@ export async function POST(
     if (!ballId || !playerOutId || !bowlerId || !wicketType) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -34,6 +35,7 @@ export async function POST(
     const wicketsCollection = await getWicketsCollection();
     const bowlingStatsCollection = await getBowlingStatsCollection();
     const matchesCollection = await getMatchesCollection();
+    const playersCollection = await getPlayersCollection();
 
     // Fetch match
     const match = await matchesCollection.findOne({
@@ -41,21 +43,21 @@ export async function POST(
     });
 
     if (!match) {
-      return NextResponse.json(
-        { error: "Match not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Match not found" }, { status: 404 });
     }
 
     // Check access control for umpires
-    let userRole = 'VIEWER';
+    let userRole = "VIEWER";
     let userId = null;
 
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     if (authHeader) {
       try {
-        const token = authHeader.replace('Bearer ', '');
-        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+        const token = authHeader.replace("Bearer ", "");
+        const decoded = jwt.verify(token, JWT_SECRET) as {
+          userId: string;
+          role: string;
+        };
         userRole = decoded.role;
         userId = decoded.userId;
       } catch (error) {
@@ -64,10 +66,10 @@ export async function POST(
     }
 
     // Check if umpire is accessing their own match
-    if (userRole === 'UMPIRE' && match.umpireId !== userId) {
+    if (userRole === "UMPIRE" && match.umpireId !== userId) {
       return NextResponse.json(
         { error: "You do not have access to this match" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -93,14 +95,34 @@ export async function POST(
     // Update ball to mark as wicket
     await ballsCollection.updateOne(
       { _id: new ObjectId(ballId) },
-      { $set: { isWicket: true } }
+      { $set: { isWicket: true } },
     );
 
     // Update innings wicket count
     await inningsCollection.updateOne(
       { _id: new ObjectId(inningsId) },
-      { $inc: { totalWickets: 1 } }
+      { $inc: { totalWickets: 1 } },
     );
+
+    // Check if innings should be marked as complete (all but one player out)
+    const updatedInnings = await inningsCollection.findOne({
+      _id: new ObjectId(inningsId),
+    });
+
+    if (updatedInnings) {
+      // Get the batting team's player count
+      const teamPlayerCount = await playersCollection.countDocuments({
+        teamId: updatedInnings.teamId,
+      });
+
+      // Mark innings as complete if all but one player is out (totalWickets = players - 1)
+      if (updatedInnings.totalWickets >= teamPlayerCount - 1) {
+        await inningsCollection.updateOne(
+          { _id: new ObjectId(inningsId) },
+          { $set: { status: "COMPLETED" } },
+        );
+      }
+    }
 
     // Update bowling stats for bowler
     const existingBowlingStats = await bowlingStatsCollection.findOne({
@@ -110,7 +132,7 @@ export async function POST(
     if (existingBowlingStats) {
       await bowlingStatsCollection.updateOne(
         { playerId: bowlerId },
-        { $inc: { wickets: 1 } }
+        { $inc: { wickets: 1 } },
       );
     } else {
       await bowlingStatsCollection.insertOne({
@@ -133,13 +155,13 @@ export async function POST(
         wicketType,
         createdAt: new Date(),
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Error recording wicket:", error);
     return NextResponse.json(
       { error: "Failed to record wicket" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -147,7 +169,7 @@ export async function POST(
 // GET /api/matches/[id]/innings/[inningsId]/wickets - Get all wickets in innings
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; inningsId: string }> }
+  { params }: { params: Promise<{ id: string; inningsId: string }> },
 ) {
   try {
     const { id, inningsId } = await params;
@@ -155,9 +177,7 @@ export async function GET(
     const playersCollection = await getPlayersCollection();
     const ballsCollection = await getBallsCollection();
 
-    const wickets = await wicketsCollection
-      .find({ inningsId })
-      .toArray();
+    const wickets = await wicketsCollection.find({ inningsId }).toArray();
 
     // Populate player and ball info
     const wicketsWithDetails = await Promise.all(
@@ -181,7 +201,7 @@ export async function GET(
           bowler: bowler ? { ...bowler, id: bowler._id?.toString() } : null,
           ball: ballData ? { ...ballData, id: ballData._id?.toString() } : null,
         };
-      })
+      }),
     );
 
     return NextResponse.json(wicketsWithDetails);
@@ -189,7 +209,7 @@ export async function GET(
     console.error("Error fetching wickets:", error);
     return NextResponse.json(
       { error: "Failed to fetch wickets" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

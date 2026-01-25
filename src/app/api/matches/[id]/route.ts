@@ -12,12 +12,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET =
+  process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 // GET /api/matches/[id] - Get match by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -32,7 +33,10 @@ export async function GET(
 
     // Validate if id is a valid MongoDB ObjectId
     if (!ObjectId.isValid(id)) {
-      return NextResponse.json({ error: "Invalid match ID format" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid match ID format" },
+        { status: 400 },
+      );
     }
 
     const match = await matchesCollection.findOne({
@@ -44,14 +48,17 @@ export async function GET(
     }
 
     // Check access control for umpires
-    let userRole = 'VIEWER';
+    let userRole = "VIEWER";
     let userId = null;
 
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     if (authHeader) {
       try {
-        const token = authHeader.replace('Bearer ', '');
-        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+        const token = authHeader.replace("Bearer ", "");
+        const decoded = jwt.verify(token, JWT_SECRET) as {
+          userId: string;
+          role: string;
+        };
         userRole = decoded.role;
         userId = decoded.userId;
       } catch (error) {
@@ -60,10 +67,10 @@ export async function GET(
     }
 
     // Check if umpire is accessing their own match
-    if (userRole === 'UMPIRE' && match.umpireId !== userId) {
+    if (userRole === "UMPIRE" && match.umpireId !== userId) {
       return NextResponse.json(
         { error: "You do not have access to this match" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -76,16 +83,18 @@ export async function GET(
     });
 
     const teamAPlayers = teamA
-      ? await playersCollection.find({ teamId: teamA._id?.toString() }).toArray()
+      ? await playersCollection
+          .find({ teamId: teamA._id?.toString() })
+          .toArray()
       : [];
     const teamBPlayers = teamB
-      ? await playersCollection.find({ teamId: teamB._id?.toString() }).toArray()
+      ? await playersCollection
+          .find({ teamId: teamB._id?.toString() })
+          .toArray()
       : [];
 
     // Get innings with complete data
-    const innings = await inningsCollection
-      .find({ matchId: id })
-      .toArray();
+    const innings = await inningsCollection.find({ matchId: id }).toArray();
 
     // Populate innings with overs, balls, and extras
     const populatedInnings = await Promise.all(
@@ -93,7 +102,7 @@ export async function GET(
         const overs = await oversCollection
           .find({ inningsId: inning._id?.toString() })
           .toArray();
-        
+
         const balls = await ballsCollection
           .find({ inningsId: inning._id?.toString() })
           .sort({ ballNumber: 1 })
@@ -131,8 +140,22 @@ export async function GET(
             id: w._id?.toString(),
           })),
         };
-      })
+      }),
     );
+
+    // Auto-complete match if both innings are finished
+    if (
+      match.status === "ONGOING" &&
+      populatedInnings.length >= 2 &&
+      populatedInnings[0].status === "COMPLETED" &&
+      populatedInnings[1].status === "COMPLETED"
+    ) {
+      await matchesCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { status: "COMPLETED", updatedAt: new Date() } },
+      );
+      match.status = "COMPLETED";
+    }
 
     return NextResponse.json({
       ...match,
@@ -163,7 +186,7 @@ export async function GET(
     console.error("Error fetching match:", error);
     return NextResponse.json(
       { error: "Failed to fetch match" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -171,7 +194,7 @@ export async function GET(
 // PATCH /api/matches/[id] - Update match status
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -191,14 +214,17 @@ export async function PATCH(
     }
 
     // Check access control for umpires
-    let userRole = 'VIEWER';
+    let userRole = "VIEWER";
     let userId = null;
 
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     if (authHeader) {
       try {
-        const token = authHeader.replace('Bearer ', '');
-        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+        const token = authHeader.replace("Bearer ", "");
+        const decoded = jwt.verify(token, JWT_SECRET) as {
+          userId: string;
+          role: string;
+        };
         userRole = decoded.role;
         userId = decoded.userId;
       } catch (error) {
@@ -207,10 +233,10 @@ export async function PATCH(
     }
 
     // Check if umpire is accessing their own match
-    if (userRole === 'UMPIRE' && match.umpireId !== userId) {
+    if (userRole === "UMPIRE" && match.umpireId !== userId) {
       return NextResponse.json(
         { error: "You do not have access to this match" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -221,7 +247,7 @@ export async function PATCH(
           status,
           updatedAt: new Date(),
         },
-      }
+      },
     );
 
     if (result.matchedCount === 0) {
@@ -249,7 +275,118 @@ export async function PATCH(
     console.error("Error updating match:", error);
     return NextResponse.json(
       { error: "Failed to update match" },
-      { status: 500 }
+      { status: 500 },
+    );
+  }
+}
+
+// DELETE /api/matches/[id] - Delete a match
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await params;
+
+    // Verify authentication
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    let userId = null;
+    let userRole = null;
+
+    try {
+      const decoded: any = jwt.verify(token, JWT_SECRET);
+      userId = decoded.userId;
+      userRole = decoded.role;
+    } catch {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    // Only Umpire and Admin can delete matches
+    if (userRole !== "UMPIRE" && userRole !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Only umpires and admins can delete matches" },
+        { status: 403 },
+      );
+    }
+
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { error: "Invalid match ID format" },
+        { status: 400 },
+      );
+    }
+
+    const matchesCollection = await getMatchesCollection();
+    const inningsCollection = await getInningsCollection();
+
+    // Fetch match to verify ownership for umpires
+    const match = await matchesCollection.findOne({
+      _id: new ObjectId(id),
+    });
+
+    if (!match) {
+      return NextResponse.json({ error: "Match not found" }, { status: 404 });
+    }
+
+    // Check if umpire is deleting their own match
+    if (userRole === "UMPIRE" && match.umpireId !== userId) {
+      return NextResponse.json(
+        { error: "You do not have access to delete this match" },
+        { status: 403 },
+      );
+    }
+
+    // Delete all innings associated with this match
+    const inningsToDelete = await inningsCollection
+      .find({ matchId: id })
+      .toArray();
+
+    for (const innings of inningsToDelete) {
+      // Delete all related data (balls, wickets, extras, overs, etc.)
+      const ballsCollection = await getBallsCollection();
+      const wicketsCollection = await getWicketsCollection();
+      const extrasCollection = await getExtrasCollection();
+      const oversCollection = await getOversCollection();
+
+      await ballsCollection.deleteMany({ inningsId: innings._id?.toString() });
+      await wicketsCollection.deleteMany({
+        inningsId: innings._id?.toString(),
+      });
+      await extrasCollection.deleteMany({ inningsId: innings._id?.toString() });
+      await oversCollection.deleteMany({ inningsId: innings._id?.toString() });
+    }
+
+    // Delete all innings
+    await inningsCollection.deleteMany({ matchId: id });
+
+    // Delete the match
+    const result = await matchesCollection.deleteOne({
+      _id: new ObjectId(id),
+    });
+
+    if (result.deletedCount === 0) {
+      return NextResponse.json(
+        { error: "Failed to delete match" },
+        { status: 400 },
+      );
+    }
+
+    return NextResponse.json(
+      {
+        message: "Match deleted successfully",
+      },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("Error deleting match:", error);
+    return NextResponse.json(
+      { error: "Failed to delete match" },
+      { status: 500 },
     );
   }
 }
