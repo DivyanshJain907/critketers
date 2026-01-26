@@ -121,7 +121,7 @@ export async function GET(
         return {
           ...inning,
           id: inning._id?.toString(),
-          status: inning.status || "ONGOING",
+          status: (inning.status || "ONGOING") as string,
           totalRuns: inning.totalRuns || 0,
           totalBalls: inning.totalBalls || 0,
           totalWickets: inning.totalWickets || 0,
