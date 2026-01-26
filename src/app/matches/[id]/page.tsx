@@ -22,6 +22,7 @@ interface Ball {
   runs: number;
   ballType: string;
   strikerPlayerId?: string;
+  nonStrikerPlayerId?: string;
 }
 
 interface AnimatedBall {
@@ -380,6 +381,100 @@ export default function MatchDetailPage() {
     }
   };
 
+  const handleDeleteLastBall = async () => {
+    if (!match || !match.innings[selectedInnings]) return;
+    const innings = match.innings[selectedInnings];
+
+    if (!innings.balls || innings.balls.length === 0) {
+      setError("No balls to delete");
+      return;
+    }
+
+    const lastBall = innings.balls[innings.balls.length - 1];
+
+    if (!confirm("Are you sure you want to delete the last ball?")) {
+      return;
+    }
+
+    // Store the second-to-last ball's striker/non-striker BEFORE deletion
+    // This is what we want to restore to after deletion
+    let previousStrikerPlayerId = "";
+    let previousNonStrikerPlayerId = "";
+
+    if (innings.balls.length >= 2) {
+      // If there are at least 2 balls, get the previous ball (before the one we're deleting)
+      const previousBall = innings.balls[innings.balls.length - 2];
+      previousStrikerPlayerId = previousBall.strikerPlayerId || "";
+      previousNonStrikerPlayerId = previousBall.nonStrikerPlayerId || "";
+    }
+
+    setIsSaving(true);
+    setError("");
+    try {
+      const token = localStorage.getItem("authToken");
+
+      // Check if this ball has an associated wicket
+      const wicket = (innings.wickets || []).find(
+        (w: any) => w.ballId === lastBall.id,
+      );
+
+      // If there's a wicket, delete it first
+      if (wicket) {
+        const wicketDeleteResponse = await fetch(
+          `/api/matches/${matchId}/innings/${innings.id}/wickets/${wicket.id}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          },
+        );
+
+        if (!wicketDeleteResponse.ok) {
+          const wicketError = await wicketDeleteResponse.json();
+          setError(wicketError.error || "Failed to delete wicket");
+          setIsSaving(false);
+          return;
+        }
+      }
+
+      // Now delete the ball
+      const response = await fetch(
+        `/api/matches/${matchId}/innings/${innings.id}/balls/${lastBall.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        },
+      );
+
+      if (response.ok) {
+        setCurrentRuns(0);
+
+        // Restore striker and non-striker to the previous ball's positions
+        setStrikerPlayerId(previousStrikerPlayerId);
+        setNonStrikerPlayerId(previousNonStrikerPlayerId);
+
+        // Refetch match data immediately
+        await fetchMatch();
+      } else {
+        const data = await response.json();
+        setError(data.error || "Failed to delete ball");
+      }
+    } catch (error) {
+      console.error("Error deleting ball:", error);
+      setError(
+        "Error deleting ball: " +
+          (error instanceof Error ? error.message : "Unknown error"),
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleRecordWicket = async () => {
     if (!match || !match.innings[selectedInnings]) return;
     if (!strikerPlayerId) {
@@ -398,59 +493,52 @@ export default function MatchDetailPage() {
     setIsSaving(true);
     const innings = match.innings[selectedInnings];
 
-    // Get the last ball recorded in this innings
-    let lastBall =
-      innings.balls && innings.balls.length > 0
-        ? innings.balls[innings.balls.length - 1]
-        : null;
+    // Always create a new ball for the wicket (wicket counts as a ball delivery)
+    let lastBall = null;
+    try {
+      const overNumber = Math.floor(innings.totalBalls / 6);
+      const nonStrikerId =
+        match.teamA.players.find((p) => p.id !== strikerPlayerId)?.id || "";
 
-    // If no ball exists, create one automatically (wicket counts as a ball)
-    if (!lastBall) {
-      try {
-        const overNumber = Math.floor(innings.totalBalls / 6);
-        const nonStrikerId =
-          match.teamA.players.find((p) => p.id !== strikerPlayerId)?.id || "";
+      // Create a ball for the wicket (0 runs since they're out)
+      const ballPayload = {
+        overNumber,
+        strikerPlayerId,
+        nonStrikerPlayerId: nonStrikerId,
+        bowlerId,
+        runs: 0,
+        ballType: "LEGAL",
+      };
 
-        // Create a ball for the wicket
-        const ballPayload = {
-          overNumber,
-          strikerPlayerId,
-          nonStrikerPlayerId: nonStrikerId,
-          bowlerId,
-          runs: 0,
-          ballType: "LEGAL",
-        };
+      const ballResponse = await fetch(
+        `/api/matches/${matchId}/innings/${innings.id}/balls`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(ballPayload),
+        },
+      );
 
-        const ballResponse = await fetch(
-          `/api/matches/${matchId}/innings/${innings.id}/balls`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(ballPayload),
-          },
-        );
-
-        const ballData = await ballResponse.json();
-        if (!ballResponse.ok) {
-          setError(ballData.error || "Failed to create ball for wicket");
-          setIsSaving(false);
-          return;
-        }
-
-        lastBall = ballData;
-      } catch (error) {
-        setError(
-          "Error creating ball: " +
-            (error instanceof Error ? error.message : "Unknown error"),
-        );
+      const ballData = await ballResponse.json();
+      if (!ballResponse.ok) {
+        setError(ballData.error || "Failed to create ball for wicket");
         setIsSaving(false);
         return;
       }
+
+      lastBall = ballData;
+    } catch (error) {
+      setError(
+        "Error creating ball: " +
+          (error instanceof Error ? error.message : "Unknown error"),
+      );
+      setIsSaving(false);
+      return;
     }
 
     try {
       if (!lastBall) {
-        setError("Failed to create or retrieve ball");
+        setError("Failed to create ball for wicket");
         setIsSaving(false);
         return;
       }
@@ -1434,22 +1522,37 @@ export default function MatchDetailPage() {
 
                   return (
                     <div>
-                      <button
-                        onClick={handleCompleteBall}
-                        disabled={
-                          isSaving ||
-                          isOverLimitReached ||
-                          match?.status === "COMPLETED"
-                        }
-                        className="w-full bg-linear-to-br from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-2xl p-6 md:p-8 mb-4 text-center shadow-2xl border border-cyan-400/20 transition transform hover:scale-105 active:scale-95 disabled:opacity-50 active:shadow-lg"
-                      >
-                        <p className="text-xs md:text-sm font-semibold mb-2 opacity-90">
-                          TAP TO COMPLETE BALL
-                        </p>
-                        <h3 className="text-6xl md:text-7xl font-bold">
-                          {currentRuns}
-                        </h3>
-                      </button>
+                      <div className="flex gap-2 mb-4">
+                        <button
+                          onClick={handleCompleteBall}
+                          disabled={
+                            isSaving ||
+                            isOverLimitReached ||
+                            match?.status === "COMPLETED"
+                          }
+                          className="flex-1 bg-linear-to-br from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-2xl p-6 md:p-8 text-center shadow-2xl border border-cyan-400/20 transition transform hover:scale-105 active:scale-95 disabled:opacity-50 active:shadow-lg"
+                        >
+                          <p className="text-xs md:text-sm font-semibold mb-2 opacity-90">
+                            TAP TO COMPLETE BALL
+                          </p>
+                          <h3 className="text-6xl md:text-7xl font-bold">
+                            {currentRuns}
+                          </h3>
+                        </button>
+                        {match?.innings[selectedInnings]?.balls &&
+                          match.innings[selectedInnings].balls.length > 0 && (
+                            <button
+                              onClick={handleDeleteLastBall}
+                              disabled={
+                                isSaving || match?.status === "COMPLETED"
+                              }
+                              className="px-4 md:px-6 bg-linear-to-br from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-2xl shadow-2xl border border-red-400/20 transition transform hover:scale-105 active:scale-95 disabled:opacity-50 font-bold text-lg md:text-2xl flex items-center justify-center min-w-[50px] md:min-w-[70px]"
+                              title="Delete last recorded ball"
+                            >
+                              {isSaving ? "⏳" : "↶"}
+                            </button>
+                          )}
+                      </div>
                       {isOverLimitReached && (
                         <div className="text-center mb-4">
                           <p className="text-red-400 font-bold mb-3 text-sm md:text-base">
