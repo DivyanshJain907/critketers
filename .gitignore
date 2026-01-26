@@ -20,6 +20,10 @@
 # production
 /build
 
+# build output
+build-output.txt
+build-output-latest.txt
+
 # misc
 .DS_Store
 *.pem
