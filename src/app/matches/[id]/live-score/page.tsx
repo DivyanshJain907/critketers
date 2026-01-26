@@ -19,10 +19,20 @@ interface Ball {
   id?: string;
   ballNumber?: number;
   overNumber?: number;
+  ballPositionInOver?: number;
   strikerPlayerId: string;
   bowlerId: string;
   runs: number;
   ballType?: string;
+  createdAt?: string;
+}
+
+interface Extra {
+  id?: string;
+  extraType: string;
+  runs: number;
+  overId?: string;
+  createdAt?: string;
 }
 
 interface Wicket {
@@ -31,6 +41,11 @@ interface Wicket {
   bowlerId: string;
   fielderId?: string;
   wicketType: string;
+}
+
+interface Over {
+  id: string;
+  overNumber: number;
 }
 
 interface Innings {
@@ -44,7 +59,9 @@ interface Innings {
   nonStrikerBatsmanId?: string;
   openingBowlerId?: string;
   balls?: Ball[];
+  extras?: Extra[];
   wickets?: Wicket[];
+  overs?: Over[];
 }
 
 interface Match {
@@ -276,62 +293,159 @@ export default function LiveScorePage() {
                 </div>
               </div>
             </div>
-            {/* Runs Per Ball Visualization */}
-            <div className="bg-linear-to-br from-slate-900 to-slate-800 rounded-lg sm:rounded-xl border border-purple-500/30 p-4 sm:p-6">
-              <h3 className="text-sm sm:text-lg font-bold text-purple-300 mb-4">
-                Runs Per Ball (Over-wise)
+            {/* Runs Per Ball Visualization - Enhanced with Extras */}
+            <div className="bg-linear-to-br from-slate-900 to-slate-800 rounded-lg sm:rounded-xl border border-cyan-500/30 p-4 sm:p-6 shadow-xl">
+              <h3 className="text-base sm:text-xl font-bold text-cyan-300 mb-4 flex items-center gap-2">
+                <span className="text-2xl">📊</span> Ball-by-Ball (Over-wise)
               </h3>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {match.innings[selectedInnings].balls &&
                 match.innings[selectedInnings].balls.length > 0 ? (
                   (() => {
-                    // Group balls by over number
-                    const ballsByOver: { [key: number]: any[] } = {};
+                    // Group balls and extras by over number
+                    const ballsByOver: Record<number, any[]> = {};
+
+                    // Add all balls
                     match.innings[selectedInnings].balls.forEach(
                       (ball: any) => {
                         const overNum = ball.overNumber || 0;
-                        if (!ballsByOver[overNum]) {
-                          ballsByOver[overNum] = [];
-                        }
-                        ballsByOver[overNum].push(ball);
+                        if (!ballsByOver[overNum]) ballsByOver[overNum] = [];
+                        ballsByOver[overNum].push({
+                          ...ball,
+                          isExtra: false,
+                          timestamp: ball.createdAt || new Date().toISOString(),
+                        });
                       },
                     );
+
+                    // Add extras (wides, no balls, etc.)
+                    if (match.innings[selectedInnings].extras) {
+                      match.innings[selectedInnings].extras.forEach(
+                        (extra: any) => {
+                          let overNum = 0;
+                          if (
+                            extra.overId &&
+                            match.innings[selectedInnings].overs
+                          ) {
+                            const over = match.innings[
+                              selectedInnings
+                            ].overs.find((o: any) => o.id === extra.overId);
+                            if (over) overNum = over.overNumber;
+                          }
+                          if (!ballsByOver[overNum]) ballsByOver[overNum] = [];
+                          ballsByOver[overNum].push({
+                            ...extra,
+                            isExtra: true,
+                            timestamp:
+                              extra.createdAt || new Date().toISOString(),
+                          });
+                        },
+                      );
+                    }
+
+                    // Sort deliveries within each over chronologically
+                    Object.keys(ballsByOver).forEach((overNumStr: string) => {
+                      const overNum = parseInt(overNumStr);
+                      ballsByOver[overNum].sort((a: any, b: any) => {
+                        // Primary: Use ballPositionInOver if available
+                        if (
+                          typeof a.ballPositionInOver === "number" &&
+                          typeof b.ballPositionInOver === "number"
+                        ) {
+                          return a.ballPositionInOver - b.ballPositionInOver;
+                        }
+                        // Fallback: Use ID for chronological order
+                        const idA = a.id || a._id || "";
+                        const idB = b.id || b._id || "";
+                        if (idA && idB) {
+                          if (idA < idB) return -1;
+                          if (idA > idB) return 1;
+                        }
+                        return 0;
+                      });
+                    });
 
                     // Sort overs and render
                     return Object.keys(ballsByOver)
                       .map(Number)
                       .sort((a, b) => a - b)
                       .map((overNum) => (
-                        <div key={overNum}>
-                          <p className="text-xs sm:text-sm font-bold text-purple-300 mb-2">
-                            Over {overNum + 1}
+                        <div
+                          key={overNum}
+                          className="bg-slate-800/60 rounded-lg p-3 sm:p-4 border border-cyan-400/20"
+                        >
+                          <p className="text-sm sm:text-base font-bold text-cyan-400 mb-2 sm:mb-3">
+                            Over {overNum}
                           </p>
-                          <div className="flex flex-wrap gap-2 sm:gap-3">
+                          <div className="flex flex-wrap gap-1.5 sm:gap-2">
                             {ballsByOver[overNum].map(
-                              (ball: any, ballIndex: number) => {
-                                let bgColor = "bg-gray-600";
+                              (delivery: any, idx: number) => {
+                                let displayValue: string | number =
+                                  delivery.runs || 0;
+                                let bgColor = "bg-blue-600";
                                 let textColor = "text-white";
+                                let tooltip = "";
 
-                                if (ball.runs === 0) {
-                                  bgColor = "bg-gray-600";
-                                } else if (ball.runs === 1 || ball.runs === 3) {
-                                  bgColor = "bg-green-600";
-                                } else if (ball.runs === 2) {
-                                  bgColor = "bg-blue-600";
-                                } else if (ball.runs === 4) {
-                                  bgColor = "bg-blue-700";
-                                  textColor = "text-blue-300 font-bold";
-                                } else if (ball.runs === 6) {
-                                  bgColor = "bg-purple-700";
-                                  textColor = "text-purple-300 font-bold";
+                                if (delivery.isExtra) {
+                                  // Handle extras
+                                  if (delivery.extraType === "WIDE") {
+                                    displayValue = "wd";
+                                    bgColor = "bg-yellow-600";
+                                    textColor = "text-yellow-100";
+                                    tooltip = "Wide";
+                                  } else if (delivery.extraType === "NO_BALL") {
+                                    displayValue = "nb";
+                                    bgColor = "bg-orange-600";
+                                    textColor = "text-orange-100";
+                                    tooltip = "No Ball";
+                                  } else if (delivery.extraType === "BYE") {
+                                    displayValue = "b";
+                                    bgColor = "bg-purple-600";
+                                    textColor = "text-purple-100";
+                                    tooltip = "Bye";
+                                  } else if (delivery.extraType === "LEG_BYE") {
+                                    displayValue = "lb";
+                                    bgColor = "bg-pink-600";
+                                    textColor = "text-pink-100";
+                                    tooltip = "Leg Bye";
+                                  }
+                                } else {
+                                  // Handle regular balls
+                                  if (delivery.runs === 0) {
+                                    bgColor = "bg-gray-600";
+                                    textColor = "text-gray-100";
+                                    tooltip = "Dot ball";
+                                  } else if (
+                                    delivery.runs === 1 ||
+                                    delivery.runs === 3 ||
+                                    delivery.runs === 5
+                                  ) {
+                                    bgColor = "bg-green-600";
+                                    textColor = "text-green-100";
+                                    tooltip = `${delivery.runs} run${delivery.runs > 1 ? "s" : ""}`;
+                                  } else if (delivery.runs === 2) {
+                                    bgColor = "bg-blue-600";
+                                    textColor = "text-blue-100";
+                                    tooltip = "2 runs";
+                                  } else if (delivery.runs === 4) {
+                                    bgColor = "bg-blue-700";
+                                    textColor = "text-blue-200 font-extrabold";
+                                    tooltip = "FOUR!";
+                                  } else if (delivery.runs === 6) {
+                                    bgColor = "bg-purple-700";
+                                    textColor =
+                                      "text-purple-200 font-extrabold";
+                                    tooltip = "SIX!";
+                                  }
                                 }
 
                                 return (
                                   <div
-                                    key={ballIndex}
-                                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-bold text-sm sm:text-base transition-all ${bgColor} ${textColor}`}
+                                    key={idx}
+                                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-sm sm:text-base font-bold transition-all hover:scale-110 ${bgColor} ${textColor} shadow-lg border border-white/20`}
+                                    title={tooltip}
                                   >
-                                    {ball.runs}
+                                    {displayValue}
                                   </div>
                                 );
                               },
@@ -341,9 +455,11 @@ export default function LiveScorePage() {
                       ));
                   })()
                 ) : (
-                  <p className="text-slate-400 text-sm">
-                    No balls recorded yet
-                  </p>
+                  <div className="text-center py-8">
+                    <p className="text-slate-400 text-sm sm:text-base">
+                      📭 No deliveries recorded yet
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
