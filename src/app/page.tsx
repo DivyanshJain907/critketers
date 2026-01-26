@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 
 interface Match {
   _id: string;
+  name?: string;
   teamA: { name: string };
   teamB: { name: string };
   venue: string;
   matchType: string;
+  status: string;
   innings: any[];
   createdAt: string;
 }
@@ -204,7 +206,7 @@ export default function LandingPage() {
                             {match.teamA.name} vs {match.teamB.name}
                           </h3>
                           <p className="text-sm text-slate-400">
-                            {match.matchType} • {match.venue}
+                            {match.matchType} {match.venue}
                           </p>
                         </div>
                         <div className="grid grid-cols-2 gap-4 mb-4">
@@ -298,7 +300,7 @@ export default function LandingPage() {
         {/* Previous Matches Section */}
         <section>
           <h2 className="text-3xl sm:text-4xl font-black mb-8 text-white">
-            📊 Previous Matches
+            Previous Matches
           </h2>
           {dataLoading ? (
             // Loading Skeleton

@@ -19,9 +19,11 @@ interface Ball {
   id: string;
   ballNumber: number;
   overNumber: number;
+  ballPositionInOver?: number;
   runs: number;
   ballType: string;
   strikerPlayerId?: string;
+  nonStrikerPlayerId?: string;
 }
 
 interface AnimatedBall {
@@ -106,6 +108,11 @@ export default function MatchDetailPage() {
   const [showEndMatchForm, setShowEndMatchForm] = useState(false);
   const [endMatchComment, setEndMatchComment] = useState("");
   const [undoTimeRemaining, setUndoTimeRemaining] = useState(0);
+  const [coinTossResult, setCoinTossResult] = useState<"HEAD" | "TAIL" | null>(
+    null,
+  );
+  const [showCoinToss, setShowCoinToss] = useState(false);
+  const [isTossing, setIsTossing] = useState(false);
 
   // Check authentication on mount
   useEffect(() => {
@@ -185,6 +192,7 @@ export default function MatchDetailPage() {
         setBowlerId("");
         setCurrentRuns(0);
         setSelectedInnings(match.innings.length);
+        setShowCoinToss(false);
       }
     } catch (error) {
       console.error("Error starting innings:", error);
@@ -194,6 +202,15 @@ export default function MatchDetailPage() {
     }
   };
 
+  const tossCoin = () => {
+    setIsTossing(true);
+    // Simulate coin tossing animation (1.5 seconds)
+    setTimeout(() => {
+      const result = Math.random() < 0.5 ? "HEAD" : "TAIL";
+      setCoinTossResult(result);
+      setIsTossing(false);
+    }, 1500);
+  };
   const handleAddRuns = (runs: number) => {
     setCurrentRuns((prev) => Math.max(0, prev + runs));
   };
@@ -365,6 +382,210 @@ export default function MatchDetailPage() {
     }
   };
 
+  const handleDeleteLastBall = async () => {
+    if (!match || !match.innings[selectedInnings]) return;
+    const innings = match.innings[selectedInnings];
+
+    // Check if there are any balls or extras to delete
+    const hasBalls = innings.balls && innings.balls.length > 0;
+    const hasExtras = innings.extras && innings.extras.length > 0;
+
+    if (!hasBalls && !hasExtras) {
+      setError("No balls or extras to delete");
+      return;
+    }
+
+    // Find the actual last ball by sorting (if any)
+    let lastBall: Ball | null = null;
+    let sortedBalls: Ball[] = [];
+
+    if (hasBalls) {
+      sortedBalls = [...innings.balls].sort((a, b) => {
+        // Sort by ID (ObjectId) which is chronologically ordered
+        const idA = a.id || "";
+        const idB = b.id || "";
+        if (idA < idB) return -1;
+        if (idA > idB) return 1;
+        return 0;
+      });
+      lastBall = sortedBalls[sortedBalls.length - 1];
+    }
+
+    // Find the actual last extra by sorting (if any)
+    let lastExtra: Extra | null = null;
+    if (hasExtras) {
+      const sortedExtras = [...(innings.extras || [])].sort((a, b) => {
+        const idA = a.id || "";
+        const idB = b.id || "";
+        if (idA < idB) return -1;
+        if (idA > idB) return 1;
+        return 0;
+      });
+      lastExtra = sortedExtras[sortedExtras.length - 1];
+    }
+
+    // Determine which is more recent: last ball or last extra
+    let deleteType: "ball" | "extra" = "ball";
+    if (lastBall && lastExtra) {
+      // Compare IDs to see which is more recent
+      if ((lastExtra.id || "") > (lastBall.id || "")) {
+        deleteType = "extra";
+      }
+    } else if (lastExtra && !lastBall) {
+      deleteType = "extra";
+    }
+
+    if (!confirm("Are you sure you want to delete the last delivery?")) {
+      return;
+    }
+
+    // Store the second-to-last ball's striker/non-striker BEFORE deletion
+    // This is what we want to restore to after deletion
+    let previousStrikerPlayerId = "";
+    let previousNonStrikerPlayerId = "";
+
+    if (sortedBalls.length >= 2) {
+      // If there are at least 2 balls, get the previous ball (before the one we're deleting)
+      const previousBall = sortedBalls[sortedBalls.length - 2];
+      previousStrikerPlayerId = previousBall.strikerPlayerId || "";
+      previousNonStrikerPlayerId = previousBall.nonStrikerPlayerId || "";
+    }
+
+    setIsSaving(true);
+    setError("");
+    try {
+      const token = localStorage.getItem("authToken");
+
+      if (deleteType === "extra" && lastExtra) {
+        // Delete the extra
+        const extraDeleteResponse = await fetch(
+          `/api/matches/${matchId}/innings/${innings.id}/extras/${lastExtra.id}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          },
+        );
+
+        if (!extraDeleteResponse.ok) {
+          const extraError = await extraDeleteResponse.json();
+          setError(extraError.error || "Failed to delete extra");
+          setIsSaving(false);
+          return;
+        }
+
+        // Refetch match data
+        setCurrentRuns(0);
+        await fetchMatch();
+      } else if (deleteType === "ball" && lastBall) {
+        // Check if this ball has an associated wicket
+        const wicket = (innings.wickets || []).find(
+          (w: any) => w.ballId === lastBall.id,
+        );
+
+        // If there's a wicket, delete it first
+        if (wicket) {
+          const wicketDeleteResponse = await fetch(
+            `/api/matches/${matchId}/innings/${innings.id}/wickets/${wicket.id}`,
+            {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+            },
+          );
+
+          if (!wicketDeleteResponse.ok) {
+            const wicketError = await wicketDeleteResponse.json();
+            setError(wicketError.error || "Failed to delete wicket");
+            setIsSaving(false);
+            return;
+          }
+        }
+
+        // Check if this ball has associated extras (wide, no ball, etc.)
+        // If this is a wide or no ball, look for the most recent extra of that type
+        if (lastBall.ballType && lastBall.ballType !== "LEGAL") {
+          // Sort extras by creation time and find the most recent one matching the ball type
+          const sortedExtras = [...(innings.extras || [])].sort(
+            (a: any, b: any) => {
+              const idA = a.id || "";
+              const idB = b.id || "";
+              if (idA < idB) return -1;
+              if (idA > idB) return 1;
+              return 0;
+            },
+          );
+
+          // Find the most recent extra that matches this ball type
+          const matchingExtra = sortedExtras.reverse().find((extra: any) => {
+            if (lastBall.ballType === "WIDE") return extra.extraType === "WIDE";
+            if (lastBall.ballType === "NO_BALL")
+              return extra.extraType === "NO_BALL";
+            return false;
+          });
+
+          // Delete the matching extra if found
+          if (matchingExtra) {
+            const extraDeleteResponse = await fetch(
+              `/api/matches/${matchId}/innings/${innings.id}/extras/${matchingExtra.id}`,
+              {
+                method: "DELETE",
+                headers: {
+                  "Content-Type": "application/json",
+                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+              },
+            );
+
+            if (!extraDeleteResponse.ok) {
+              const extraError = await extraDeleteResponse.json();
+              console.warn("Failed to delete extra:", extraError);
+              // Continue even if extra deletion fails
+            }
+          }
+        }
+
+        // Now delete the ball
+        const response = await fetch(
+          `/api/matches/${matchId}/innings/${innings.id}/balls/${lastBall.id}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          },
+        );
+
+        if (response.ok) {
+          setCurrentRuns(0);
+
+          // Restore striker and non-striker to the previous ball's positions
+          setStrikerPlayerId(previousStrikerPlayerId);
+          setNonStrikerPlayerId(previousNonStrikerPlayerId);
+
+          // Refetch match data immediately
+          await fetchMatch();
+        } else {
+          const data = await response.json();
+          setError(data.error || "Failed to delete ball");
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting delivery:", error);
+      setError(
+        "Error deleting delivery: " +
+          (error instanceof Error ? error.message : "Unknown error"),
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleRecordWicket = async () => {
     if (!match || !match.innings[selectedInnings]) return;
     if (!strikerPlayerId) {
@@ -383,59 +604,52 @@ export default function MatchDetailPage() {
     setIsSaving(true);
     const innings = match.innings[selectedInnings];
 
-    // Get the last ball recorded in this innings
-    let lastBall =
-      innings.balls && innings.balls.length > 0
-        ? innings.balls[innings.balls.length - 1]
-        : null;
+    // Always create a new ball for the wicket (wicket counts as a ball delivery)
+    let lastBall = null;
+    try {
+      const overNumber = Math.floor(innings.totalBalls / 6);
+      const nonStrikerId =
+        match.teamA.players.find((p) => p.id !== strikerPlayerId)?.id || "";
 
-    // If no ball exists, create one automatically (wicket counts as a ball)
-    if (!lastBall) {
-      try {
-        const overNumber = Math.floor(innings.totalBalls / 6);
-        const nonStrikerId =
-          match.teamA.players.find((p) => p.id !== strikerPlayerId)?.id || "";
+      // Create a ball for the wicket (0 runs since they're out)
+      const ballPayload = {
+        overNumber,
+        strikerPlayerId,
+        nonStrikerPlayerId: nonStrikerId,
+        bowlerId,
+        runs: 0,
+        ballType: "LEGAL",
+      };
 
-        // Create a ball for the wicket
-        const ballPayload = {
-          overNumber,
-          strikerPlayerId,
-          nonStrikerPlayerId: nonStrikerId,
-          bowlerId,
-          runs: 0,
-          ballType: "LEGAL",
-        };
+      const ballResponse = await fetch(
+        `/api/matches/${matchId}/innings/${innings.id}/balls`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(ballPayload),
+        },
+      );
 
-        const ballResponse = await fetch(
-          `/api/matches/${matchId}/innings/${innings.id}/balls`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(ballPayload),
-          },
-        );
-
-        const ballData = await ballResponse.json();
-        if (!ballResponse.ok) {
-          setError(ballData.error || "Failed to create ball for wicket");
-          setIsSaving(false);
-          return;
-        }
-
-        lastBall = ballData;
-      } catch (error) {
-        setError(
-          "Error creating ball: " +
-            (error instanceof Error ? error.message : "Unknown error"),
-        );
+      const ballData = await ballResponse.json();
+      if (!ballResponse.ok) {
+        setError(ballData.error || "Failed to create ball for wicket");
         setIsSaving(false);
         return;
       }
+
+      lastBall = ballData;
+    } catch (error) {
+      setError(
+        "Error creating ball: " +
+          (error instanceof Error ? error.message : "Unknown error"),
+      );
+      setIsSaving(false);
+      return;
     }
 
     try {
       if (!lastBall) {
-        setError("Failed to create or retrieve ball");
+        setError("Failed to create ball for wicket");
         setIsSaving(false);
         return;
       }
@@ -1031,34 +1245,174 @@ export default function MatchDetailPage() {
           </div>
         ) : match.innings.length === 0 ? (
           <section>
-            <div className="relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-12 text-center">
-              <h2 className="text-4xl font-black text-white mb-3">
-                🎯 Start Innings
-              </h2>
-              <p className="text-slate-400 mb-8">
-                Select which team will bat first
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button
-                  onClick={() => startInnings(match.teamA.id)}
-                  disabled={isSaving}
-                  className="py-4 px-6 bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-blue-500/50"
+            {showCoinToss && coinTossResult === null ? (
+              <div className="relative overflow-hidden rounded-xl border border-yellow-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-12 text-center shadow-2xl">
+                <style>{`
+                  @keyframes coinFlip {
+                    0% { transform: rotateY(0) rotateZ(0); }
+                    25% { transform: rotateY(90deg) rotateZ(10deg); }
+                    50% { transform: rotateY(180deg) rotateZ(0); }
+                    75% { transform: rotateY(270deg) rotateZ(-10deg); }
+                    100% { transform: rotateY(360deg) rotateZ(0); }
+                  }
+                  @keyframes bounce {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-20px); }
+                  }
+                  .coin-flip {
+                    animation: coinFlip 1.5s ease-in-out;
+                    transform-style: preserve-3d;
+                  }
+                  .bounce-animation {
+                    animation: bounce 1.5s ease-in-out;
+                  }
+                `}</style>
+                <h2 className="text-4xl font-black text-white mb-3">
+                  🪙 Coin Toss
+                </h2>
+                <p className="text-slate-400 mb-8">
+                  Tap the coin to toss and decide who bats first!
+                </p>
+                <div className="flex justify-center mb-8">
+                  <button
+                    onClick={tossCoin}
+                    disabled={isTossing}
+                    className={`w-32 h-32 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center text-6xl shadow-2xl hover:shadow-yellow-500/50 hover:scale-110 transform transition-all cursor-pointer active:scale-95 disabled:opacity-75 ${
+                      isTossing ? "coin-flip" : ""
+                    }`}
+                  >
+                    🪙
+                  </button>
+                </div>
+                {isTossing && (
+                  <div className="mb-4">
+                    <div className="flex justify-center gap-2">
+                      <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"></div>
+                      <div
+                        className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"
+                        style={{ animationDelay: "0.1s" }}
+                      ></div>
+                      <div
+                        className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"
+                        style={{ animationDelay: "0.2s" }}
+                      ></div>
+                    </div>
+                    <p className="text-yellow-300 text-sm mt-2 font-bold">
+                      Tossing...
+                    </p>
+                  </div>
+                )}
+                <p
+                  className={`text-slate-300 text-sm mb-6 ${isTossing ? "invisible" : ""}`}
                 >
-                  {isSaving
-                    ? "⏳ Starting..."
-                    : `▶ ${match.teamA.name} Innings`}
-                </button>
+                  Click the coin to toss
+                </p>
                 <button
-                  onClick={() => startInnings(match.teamB.id)}
-                  disabled={isSaving}
-                  className="py-4 px-6 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-green-500/50"
+                  onClick={() => setShowCoinToss(false)}
+                  disabled={isTossing}
+                  className="text-slate-400 hover:text-slate-300 text-sm underline disabled:opacity-50"
                 >
-                  {isSaving
-                    ? "⏳ Starting..."
-                    : `▶ ${match.teamB.name} Innings`}
+                  Skip coin toss
                 </button>
               </div>
-            </div>
+            ) : coinTossResult ? (
+              <div className="relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8 sm:p-12 text-center shadow-2xl">
+                <h2 className="text-3xl sm:text-4xl font-black text-white mb-6">
+                  🎯 Coin Result
+                </h2>
+                <div
+                  className={`inline-block px-6 sm:px-8 py-3 sm:py-4 rounded-full text-2xl sm:text-3xl font-black mb-8 shadow-lg animate-bounce ${
+                    coinTossResult === "HEAD"
+                      ? "bg-blue-600 text-white"
+                      : "bg-orange-600 text-white"
+                  }`}
+                >
+                  {coinTossResult === "HEAD" ? "👤 HEAD" : "🪙 TAIL"}
+                </div>
+                <p className="text-slate-400 mb-10 text-sm sm:text-base font-semibold">
+                  {coinTossResult === "HEAD" ? "HEADS won!" : "TAILS won!"}
+                </p>
+                <p className="text-slate-300 mb-8 text-xs sm:text-sm">
+                  Choose which team bats first:
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto">
+                  <button
+                    onClick={() => startInnings(match.teamA.id)}
+                    disabled={isSaving}
+                    className="group relative py-4 px-4 sm:px-6 bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-blue-500/50 transform hover:scale-105 active:scale-95 overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-white/10 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+                    <span className="relative flex flex-col items-center gap-1">
+                      <span className="text-lg">▶</span>
+                      <span className="text-xs sm:text-sm font-semibold truncate">
+                        {match.teamA.name}
+                      </span>
+                      <span className="text-xs text-blue-100">Innings</span>
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => startInnings(match.teamB.id)}
+                    disabled={isSaving}
+                    className="group relative py-4 px-4 sm:px-6 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-green-500/50 transform hover:scale-105 active:scale-95 overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-white/10 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+                    <span className="relative flex flex-col items-center gap-1">
+                      <span className="text-lg">▶</span>
+                      <span className="text-xs sm:text-sm font-semibold truncate">
+                        {match.teamB.name}
+                      </span>
+                      <span className="text-xs text-green-100">Innings</span>
+                    </span>
+                  </button>
+                </div>
+                <button
+                  onClick={() => setCoinTossResult(null)}
+                  className="mt-6 text-slate-400 hover:text-slate-300 text-sm underline transition"
+                >
+                  Toss again
+                </button>
+              </div>
+            ) : (
+              <div className="relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-12 text-center shadow-2xl">
+                <h2 className="text-4xl font-black text-white mb-3">
+                  🎯 Start Innings
+                </h2>
+                <p className="text-slate-400 mb-8">
+                  Choose how to decide who bats first
+                </p>
+                <div className="grid grid-cols-1 gap-4 mb-6 max-w-md mx-auto">
+                  <button
+                    onClick={() => setShowCoinToss(true)}
+                    className="py-4 px-6 bg-linear-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-yellow-500/50"
+                  >
+                    🪙 Coin Toss
+                  </button>
+                </div>
+                <p className="text-slate-400 mb-6 text-sm">
+                  Or select team directly
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    onClick={() => startInnings(match.teamA.id)}
+                    disabled={isSaving}
+                    className="py-4 px-6 bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-blue-500/50"
+                  >
+                    {isSaving
+                      ? "⏳ Starting..."
+                      : `▶ ${match.teamA.name} Innings`}
+                  </button>
+                  <button
+                    onClick={() => startInnings(match.teamB.id)}
+                    disabled={isSaving}
+                    className="py-4 px-6 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-green-500/50"
+                  >
+                    {isSaving
+                      ? "⏳ Starting..."
+                      : `▶ ${match.teamB.name} Innings`}
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
         ) : (
           <>
@@ -1153,123 +1507,6 @@ export default function MatchDetailPage() {
                 })()}
 
                 {/* Player Selection */}
-                <div className="mb-4">
-                  <p className="text-white text-xs md:text-sm font-bold mb-3">
-                    🏏 Batsman & Bowler
-                  </p>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <p className="text-gray-300 text-xs mb-1">Striker</p>
-                      <select
-                        title="Select striker"
-                        value={strikerPlayerId}
-                        onChange={(e) => setStrikerPlayerId(e.target.value)}
-                        disabled={match?.status === "COMPLETED"}
-                        className="w-full px-3 py-2 md:py-3 bg-slate-800 border border-cyan-400/40 text-white rounded-lg focus:outline-none focus:border-cyan-300 focus:ring-1 focus:ring-cyan-400/50 text-xs md:text-sm hover:border-cyan-400/60 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <option value="">🏏 Striker</option>
-                        {match.innings[selectedInnings].teamId &&
-                        match.teamA.id === match.innings[selectedInnings].teamId
-                          ? match.teamA.players.map((p) => {
-                              // Check if this player has been given out
-                              const isOut = (
-                                match.innings[selectedInnings].wickets || []
-                              ).some((w: any) => w.playerOutId === p.id);
-                              // Don't show out players or the non-striker
-                              if (isOut || p.id === nonStrikerPlayerId)
-                                return null;
-                              return (
-                                <option key={p.id} value={p.id}>
-                                  {p.name}
-                                </option>
-                              );
-                            })
-                          : match.teamB.players.map((p) => {
-                              // Check if this player has been given out
-                              const isOut = (
-                                match.innings[selectedInnings].wickets || []
-                              ).some((w: any) => w.playerOutId === p.id);
-                              // Don't show out players or the non-striker
-                              if (isOut || p.id === nonStrikerPlayerId)
-                                return null;
-                              return (
-                                <option key={p.id} value={p.id}>
-                                  {p.name}
-                                </option>
-                              );
-                            })}
-                      </select>
-                    </div>
-                    <div>
-                      <p className="text-gray-300 text-xs mb-1">Non-Striker</p>
-                      <select
-                        title="Select non-striker"
-                        value={nonStrikerPlayerId}
-                        onChange={(e) => setNonStrikerPlayerId(e.target.value)}
-                        disabled={match?.status === "COMPLETED"}
-                        className="w-full px-3 py-2 md:py-3 bg-slate-800 border border-blue-400/40 text-white rounded-lg focus:outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-400/50 text-xs md:text-sm hover:border-blue-400/60 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <option value="">👥 Non-Striker</option>
-                        {match.innings[selectedInnings].teamId &&
-                        match.teamA.id === match.innings[selectedInnings].teamId
-                          ? match.teamA.players.map((p) => {
-                              // Check if this player has been given out
-                              const isOut = (
-                                match.innings[selectedInnings].wickets || []
-                              ).some((w: any) => w.playerOutId === p.id);
-                              // Don't show out players or the striker
-                              if (isOut || p.id === strikerPlayerId)
-                                return null;
-                              return (
-                                <option key={p.id} value={p.id}>
-                                  {p.name}
-                                </option>
-                              );
-                            })
-                          : match.teamB.players.map((p) => {
-                              // Check if this player has been given out
-                              const isOut = (
-                                match.innings[selectedInnings].wickets || []
-                              ).some((w: any) => w.playerOutId === p.id);
-                              // Don't show out players or the striker
-                              if (isOut || p.id === strikerPlayerId)
-                                return null;
-                              return (
-                                <option key={p.id} value={p.id}>
-                                  {p.name}
-                                </option>
-                              );
-                            })}
-                      </select>
-                    </div>
-                    <div>
-                      <p className="text-gray-300 text-xs mb-1">Bowler</p>
-                      <select
-                        title="Select bowler"
-                        value={bowlerId}
-                        onChange={(e) => setBowlerId(e.target.value)}
-                        disabled={match?.status === "COMPLETED"}
-                        className="w-full px-3 py-2 md:py-3 bg-slate-800 border border-emerald-400/40 text-white rounded-lg focus:outline-none focus:border-emerald-300 focus:ring-1 focus:ring-emerald-400/50 text-xs md:text-sm hover:border-emerald-400/60 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <option value="">⚾ Bowler</option>
-                        {match.innings[selectedInnings].teamId &&
-                        match.teamA.id === match.innings[selectedInnings].teamId
-                          ? match.teamB.players.map((p) => (
-                              <option key={p.id} value={p.id}>
-                                {p.name}
-                              </option>
-                            ))
-                          : match.teamA.players.map((p) => (
-                              <option key={p.id} value={p.id}>
-                                {p.name}
-                              </option>
-                            ))}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Large Runs Display - Clickable to Complete Ball */}
                 {(() => {
                   const innings = match?.innings[selectedInnings];
                   const maxBalls = (match?.oversLimit ?? 0) * 6;
@@ -1277,169 +1514,328 @@ export default function MatchDetailPage() {
                     ? innings.totalBalls >= maxBalls
                     : false;
 
-                  return (
-                    <div>
-                      <button
-                        onClick={handleCompleteBall}
-                        disabled={
-                          isSaving ||
-                          isOverLimitReached ||
-                          match?.status === "COMPLETED"
-                        }
-                        className="w-full bg-linear-to-br from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-2xl p-6 md:p-8 mb-4 text-center shadow-2xl border border-cyan-400/20 transition transform hover:scale-105 active:scale-95 disabled:opacity-50 active:shadow-lg"
-                      >
-                        <p className="text-xs md:text-sm font-semibold mb-2 opacity-90">
-                          TAP TO COMPLETE BALL
-                        </p>
-                        <h3 className="text-6xl md:text-7xl font-bold">
-                          {currentRuns}
-                        </h3>
-                      </button>
-                      {isOverLimitReached && (
-                        <div className="text-center mb-4">
-                          <p className="text-red-400 font-bold mb-3 text-sm md:text-base">
-                            ⚠️ Over limit ({match.oversLimit} overs) reached!
-                          </p>
-                          {match.innings[selectedInnings]?.teamId ===
-                            match.teamA.id &&
-                            match.innings.length === 1 && (
-                              <button
-                                onClick={() => startInnings(match.teamB.id)}
-                                disabled={isSaving}
-                                className="w-full py-3 md:py-4 px-4 md:px-6 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-xl font-bold text-sm md:text-base transition shadow-lg"
-                              >
-                                {isSaving
-                                  ? "⏳ Starting..."
-                                  : `▶ Start ${match.teamB.name} Innings`}
-                              </button>
-                            )}
-                          {match.innings[selectedInnings]?.teamId ===
-                            match.teamB.id &&
-                            match.innings.length === 2 && (
-                              <p className="text-yellow-400 font-semibold text-sm md:text-base">
-                                ✅ Match Complete!
-                              </p>
-                            )}
-                        </div>
-                      )}
-                    </div>
-                  );
+                  // Hide all controls when over limit reached
+                  if (isOverLimitReached) {
+                    return (
+                      <div className="text-center mb-4">
+                        {match.innings[selectedInnings]?.teamId ===
+                          match.teamA.id &&
+                          match.innings.length === 1 && (
+                            <button
+                              onClick={() => startInnings(match.teamB.id)}
+                              disabled={isSaving}
+                              className="w-full py-3 md:py-4 px-4 md:px-6 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-xl font-bold text-sm md:text-base transition shadow-lg"
+                            >
+                              {isSaving
+                                ? "⏳ Starting..."
+                                : `▶ Start ${match.teamB.name} Innings`}
+                            </button>
+                          )}
+                        {match.innings[selectedInnings]?.teamId ===
+                          match.teamB.id &&
+                          match.innings.length === 2 && (
+                            <p className="text-yellow-400 font-semibold text-sm md:text-base">
+                              ✅ Match Complete!
+                            </p>
+                          )}
+                      </div>
+                    );
+                  }
+
+                  return null;
                 })()}
 
-                {/* Scoring Buttons - 0, 1, 2, 4, 6 */}
-                <div className="grid grid-cols-5 gap-2 mb-4">
-                  {[
-                    {
-                      runs: 0,
-                      gradient:
-                        "from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-blue-400/20",
-                      label: "0",
-                    },
-                    {
-                      runs: 1,
-                      gradient:
-                        "from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-blue-400/20",
-                      label: "1",
-                    },
-                    {
-                      runs: 2,
-                      gradient:
-                        "from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-blue-400/20",
-                      label: "2",
-                    },
-                    {
-                      runs: 4,
-                      gradient:
-                        "from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 border-slate-300/30",
-                      label: "4",
-                    },
-                    {
-                      runs: 6,
-                      gradient:
-                        "from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 border-amber-300/30",
-                      label: "6",
-                    },
-                  ].map((btn) => (
-                    <button
-                      key={btn.runs}
-                      onClick={() => handleAddRuns(btn.runs)}
-                      disabled={match?.status === "COMPLETED"}
-                      className={`bg-linear-to-br ${btn.gradient} text-white font-bold py-3 md:py-5 rounded-xl text-sm md:text-xl transition shadow-lg border disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      {btn.label}
-                    </button>
-                  ))}
-                </div>
+                {(() => {
+                  const innings = match?.innings[selectedInnings];
+                  const maxBalls = (match?.oversLimit ?? 0) * 6;
+                  const isOverLimitReached: boolean = innings
+                    ? innings.totalBalls >= maxBalls
+                    : false;
 
-                {/* Undo Button Only */}
-                <div className="mb-4">
-                  <button
-                    onClick={() => handleAddRuns(-1)}
-                    disabled={match?.status === "COMPLETED"}
-                    className="w-full bg-linear-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-xl transition text-sm md:text-base shadow-lg border border-red-400/20"
-                  >
-                    ➖ Undo
-                  </button>
-                </div>
+                  // Hide all controls when over limit reached
+                  if (isOverLimitReached) return null;
 
-                {/* Special Balls - Minimal */}
-                <div className="grid grid-cols-4 gap-2 mb-4">
-                  <button
-                    onClick={() => handleRecordExtra("WIDE")}
-                    disabled={isSaving || match?.status === "COMPLETED"}
-                    className="bg-linear-to-br from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-lg text-xs md:text-sm transition shadow-lg"
-                  >
-                    Wide
-                  </button>
-                  <button
-                    onClick={() => handleRecordExtra("NO_BALL")}
-                    disabled={isSaving || match?.status === "COMPLETED"}
-                    className="bg-linear-to-br from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-lg text-xs md:text-sm transition shadow-lg"
-                  >
-                    No Ball
-                  </button>
-                  <button
-                    onClick={() => handleRecordExtra("BYE")}
-                    disabled={isSaving || match?.status === "COMPLETED"}
-                    className="bg-linear-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-lg text-xs md:text-sm transition shadow-lg"
-                  >
-                    Bye
-                  </button>
-                  <button
-                    onClick={() => handleRecordExtra("LEG_BYE")}
-                    disabled={isSaving || match?.status === "COMPLETED"}
-                    className="bg-linear-to-br from-pink-600 to-pink-700 hover:from-pink-700 hover:to-pink-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-lg text-xs md:text-sm transition shadow-lg"
-                  >
-                    Leg Bye
-                  </button>
-                </div>
+                  return (
+                    <>
+                      <div className="mb-4">
+                        <p className="text-white text-xs md:text-sm font-bold mb-3">
+                          🏏 Batsman & Bowler
+                        </p>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div>
+                            <p className="text-gray-300 text-xs mb-1">
+                              Striker
+                            </p>
+                            <select
+                              title="Select striker"
+                              value={strikerPlayerId}
+                              onChange={(e) =>
+                                setStrikerPlayerId(e.target.value)
+                              }
+                              disabled={match?.status === "COMPLETED"}
+                              className="w-full px-3 py-2 md:py-3 bg-slate-800 border border-cyan-400/40 text-white rounded-lg focus:outline-none focus:border-cyan-300 focus:ring-1 focus:ring-cyan-400/50 text-xs md:text-sm hover:border-cyan-400/60 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <option value="">🏏 Striker</option>
+                              {match.innings[selectedInnings].teamId &&
+                              match.teamA.id ===
+                                match.innings[selectedInnings].teamId
+                                ? match.teamA.players.map((p) => {
+                                    // Check if this player has been given out
+                                    const isOut = (
+                                      match.innings[selectedInnings].wickets ||
+                                      []
+                                    ).some((w: any) => w.playerOutId === p.id);
+                                    // Don't show out players or the non-striker
+                                    if (isOut || p.id === nonStrikerPlayerId)
+                                      return null;
+                                    return (
+                                      <option key={p.id} value={p.id}>
+                                        {p.name}
+                                      </option>
+                                    );
+                                  })
+                                : match.teamB.players.map((p) => {
+                                    // Check if this player has been given out
+                                    const isOut = (
+                                      match.innings[selectedInnings].wickets ||
+                                      []
+                                    ).some((w: any) => w.playerOutId === p.id);
+                                    // Don't show out players or the non-striker
+                                    if (isOut || p.id === nonStrikerPlayerId)
+                                      return null;
+                                    return (
+                                      <option key={p.id} value={p.id}>
+                                        {p.name}
+                                      </option>
+                                    );
+                                  })}
+                            </select>
+                          </div>
+                          <div>
+                            <p className="text-gray-300 text-xs mb-1">
+                              Non-Striker
+                            </p>
+                            <select
+                              title="Select non-striker"
+                              value={nonStrikerPlayerId}
+                              onChange={(e) =>
+                                setNonStrikerPlayerId(e.target.value)
+                              }
+                              disabled={match?.status === "COMPLETED"}
+                              className="w-full px-3 py-2 md:py-3 bg-slate-800 border border-blue-400/40 text-white rounded-lg focus:outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-400/50 text-xs md:text-sm hover:border-blue-400/60 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <option value="">👥 Non-Striker</option>
+                              {match.innings[selectedInnings].teamId &&
+                              match.teamA.id ===
+                                match.innings[selectedInnings].teamId
+                                ? match.teamA.players.map((p) => {
+                                    // Check if this player has been given out
+                                    const isOut = (
+                                      match.innings[selectedInnings].wickets ||
+                                      []
+                                    ).some((w: any) => w.playerOutId === p.id);
+                                    // Don't show out players or the striker
+                                    if (isOut || p.id === strikerPlayerId)
+                                      return null;
+                                    return (
+                                      <option key={p.id} value={p.id}>
+                                        {p.name}
+                                      </option>
+                                    );
+                                  })
+                                : match.teamB.players.map((p) => {
+                                    // Check if this player has been given out
+                                    const isOut = (
+                                      match.innings[selectedInnings].wickets ||
+                                      []
+                                    ).some((w: any) => w.playerOutId === p.id);
+                                    // Don't show out players or the striker
+                                    if (isOut || p.id === strikerPlayerId)
+                                      return null;
+                                    return (
+                                      <option key={p.id} value={p.id}>
+                                        {p.name}
+                                      </option>
+                                    );
+                                  })}
+                            </select>
+                          </div>
+                          <div>
+                            <p className="text-gray-300 text-xs mb-1">Bowler</p>
+                            <select
+                              title="Select bowler"
+                              value={bowlerId}
+                              onChange={(e) => setBowlerId(e.target.value)}
+                              disabled={match?.status === "COMPLETED"}
+                              className="w-full px-3 py-2 md:py-3 bg-slate-800 border border-emerald-400/40 text-white rounded-lg focus:outline-none focus:border-emerald-300 focus:ring-1 focus:ring-emerald-400/50 text-xs md:text-sm hover:border-emerald-400/60 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <option value="">⚾ Bowler</option>
+                              {match.innings[selectedInnings].teamId &&
+                              match.teamA.id ===
+                                match.innings[selectedInnings].teamId
+                                ? match.teamB.players.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                      {p.name}
+                                    </option>
+                                  ))
+                                : match.teamA.players.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                      {p.name}
+                                    </option>
+                                  ))}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
 
-                {/* Wicket - Simple Button */}
-                <button
-                  onClick={() => {
-                    setShowWicketForm(true);
-                    setWicketForm({
-                      playerOutId: strikerPlayerId,
-                      wicketType: "BOWLED",
-                      fielderId: "",
-                    });
-                  }}
-                  disabled={
-                    isSaving || !bowlerId || match?.status === "COMPLETED"
-                  }
-                  className="w-full bg-linear-to-br from-red-700 to-red-800 hover:from-red-800 hover:to-red-900 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-xl text-sm md:text-base mb-4 transition shadow-lg border border-red-400/20"
-                >
-                  🎯 Wicket
-                </button>
+                      {/* Large Runs Display - Clickable to Complete Ball */}
+                      <div>
+                        <div className="flex gap-2 mb-4">
+                          <button
+                            onClick={handleCompleteBall}
+                            disabled={isSaving || match?.status === "COMPLETED"}
+                            className="flex-1 bg-linear-to-br from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-2xl p-6 md:p-8 text-center shadow-2xl border border-cyan-400/20 transition transform hover:scale-105 active:scale-95 disabled:opacity-50 active:shadow-lg"
+                          >
+                            <p className="text-xs md:text-sm font-semibold mb-2 opacity-90">
+                              TAP TO COMPLETE BALL
+                            </p>
+                            <h3 className="text-6xl md:text-7xl font-bold">
+                              {currentRuns}
+                            </h3>
+                          </button>
+                          {match?.innings[selectedInnings]?.balls &&
+                            match.innings[selectedInnings].balls.length > 0 && (
+                              <button
+                                onClick={handleDeleteLastBall}
+                                disabled={
+                                  isSaving || match?.status === "COMPLETED"
+                                }
+                                className="px-4 md:px-6 bg-linear-to-br from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-2xl shadow-2xl border border-red-400/20 transition transform hover:scale-105 active:scale-95 disabled:opacity-50 font-bold text-lg md:text-2xl flex items-center justify-center min-w-[50px] md:min-w-[70px]"
+                                title="Delete last recorded ball"
+                              >
+                                {isSaving ? "⏳" : "↶"}
+                              </button>
+                            )}
+                        </div>
+                      </div>
 
-                {/* End Match Button */}
-                <button
-                  onClick={() => setShowEndMatchForm(true)}
-                  disabled={isSaving || match?.status === "COMPLETED"}
-                  className="w-full bg-linear-to-br from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-xl text-sm md:text-base mb-4 transition shadow-lg border border-slate-400/20"
-                >
-                  ⏹️ End Match
-                </button>
+                      {/* Scoring Buttons - 0, 1, 2, 4, 6 */}
+                      <div className="grid grid-cols-5 gap-2 mb-4">
+                        {[
+                          {
+                            runs: 0,
+                            gradient:
+                              "from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-blue-400/20",
+                            label: "0",
+                          },
+                          {
+                            runs: 1,
+                            gradient:
+                              "from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-blue-400/20",
+                            label: "1",
+                          },
+                          {
+                            runs: 2,
+                            gradient:
+                              "from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-blue-400/20",
+                            label: "2",
+                          },
+                          {
+                            runs: 4,
+                            gradient:
+                              "from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 border-slate-300/30",
+                            label: "4",
+                          },
+                          {
+                            runs: 6,
+                            gradient:
+                              "from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 border-amber-300/30",
+                            label: "6",
+                          },
+                        ].map((btn) => (
+                          <button
+                            key={btn.runs}
+                            onClick={() => handleAddRuns(btn.runs)}
+                            disabled={match?.status === "COMPLETED"}
+                            className={`bg-linear-to-br ${btn.gradient} text-white font-bold py-3 md:py-5 rounded-xl text-sm md:text-xl transition shadow-lg border disabled:opacity-50 disabled:cursor-not-allowed`}
+                          >
+                            {btn.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Undo Button Only */}
+                      <div className="mb-4">
+                        <button
+                          onClick={() => handleAddRuns(-1)}
+                          disabled={match?.status === "COMPLETED"}
+                          className="w-full bg-linear-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-xl transition text-sm md:text-base shadow-lg border border-red-400/20"
+                        >
+                          ➖ Undo
+                        </button>
+                      </div>
+
+                      {/* Special Balls - Minimal */}
+                      <div className="grid grid-cols-4 gap-2 mb-4">
+                        <button
+                          onClick={() => handleRecordExtra("WIDE")}
+                          disabled={isSaving || match?.status === "COMPLETED"}
+                          className="bg-linear-to-br from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-lg text-xs md:text-sm transition shadow-lg"
+                        >
+                          Wide
+                        </button>
+                        <button
+                          onClick={() => handleRecordExtra("NO_BALL")}
+                          disabled={isSaving || match?.status === "COMPLETED"}
+                          className="bg-linear-to-br from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-lg text-xs md:text-sm transition shadow-lg"
+                        >
+                          No Ball
+                        </button>
+                        <button
+                          onClick={() => handleRecordExtra("BYE")}
+                          disabled={isSaving || match?.status === "COMPLETED"}
+                          className="bg-linear-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-lg text-xs md:text-sm transition shadow-lg"
+                        >
+                          Bye
+                        </button>
+                        <button
+                          onClick={() => handleRecordExtra("LEG_BYE")}
+                          disabled={isSaving || match?.status === "COMPLETED"}
+                          className="bg-linear-to-br from-pink-600 to-pink-700 hover:from-pink-700 hover:to-pink-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-lg text-xs md:text-sm transition shadow-lg"
+                        >
+                          Leg Bye
+                        </button>
+                      </div>
+
+                      {/* Wicket - Simple Button */}
+                      <button
+                        onClick={() => {
+                          setShowWicketForm(true);
+                          setWicketForm({
+                            playerOutId: strikerPlayerId,
+                            wicketType: "BOWLED",
+                            fielderId: "",
+                          });
+                        }}
+                        disabled={
+                          isSaving || !bowlerId || match?.status === "COMPLETED"
+                        }
+                        className="w-full bg-linear-to-br from-red-700 to-red-800 hover:from-red-800 hover:to-red-900 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-xl text-sm md:text-base mb-4 transition shadow-lg border border-red-400/20"
+                      >
+                        🎯 Wicket
+                      </button>
+
+                      {/* End Match Button */}
+                      <button
+                        onClick={() => setShowEndMatchForm(true)}
+                        disabled={isSaving || match?.status === "COMPLETED"}
+                        className="w-full bg-linear-to-br from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold py-3 md:py-4 rounded-xl text-sm md:text-base mb-4 transition shadow-lg border border-slate-400/20"
+                      >
+                        ⏹️ End Match
+                      </button>
+                    </>
+                  );
+                })()}
 
                 {/* Wicket Form Modal */}
                 {showWicketForm && match.innings[selectedInnings] && (
@@ -1810,14 +2206,32 @@ export default function MatchDetailPage() {
                           },
                         );
 
-                        // Sort deliveries within each over by timestamp to maintain chronological order
+                        // Sort deliveries within each over by position to maintain correct order
                         Object.keys(ballsByOver).forEach(
                           (overNumStr: string) => {
                             const overNum = parseInt(overNumStr);
                             ballsByOver[overNum].sort((a: any, b: any) => {
-                              const timeA = new Date(a.timestamp).getTime();
-                              const timeB = new Date(b.timestamp).getTime();
-                              return timeA - timeB;
+                              // Primary: Use ballPositionInOver if available (most reliable)
+                              if (
+                                typeof a.ballPositionInOver === "number" &&
+                                typeof b.ballPositionInOver === "number"
+                              ) {
+                                return (
+                                  a.ballPositionInOver - b.ballPositionInOver
+                                );
+                              }
+
+                              // Fallback 1: Use ID (ObjectId string) for chronological sorting
+                              const idA = a.id || a._id || "";
+                              const idB = b.id || b._id || "";
+
+                              if (idA && idB) {
+                                if (idA < idB) return -1;
+                                if (idA > idB) return 1;
+                              }
+
+                              // Fallback 2: Use ballNumber
+                              return (a.ballNumber || 0) - (b.ballNumber || 0);
                             });
                           },
                         );
