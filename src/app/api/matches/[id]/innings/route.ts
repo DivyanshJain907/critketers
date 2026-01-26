@@ -8,22 +8,29 @@ import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET =
+  process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 // POST /api/matches/[id]/innings - Start a new innings
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
     const body = await request.json();
-    const { teamId, inningsNumber, openingBatsmanId, openingBowlerId } = body;
+    const {
+      teamId,
+      inningsNumber,
+      openingBatsmanId,
+      nonStrikerBatsmanId,
+      openingBowlerId,
+    } = body;
 
     if (!teamId || !openingBatsmanId || !openingBowlerId) {
       return NextResponse.json(
         { error: "Team ID, opening batsman, and opening bowler are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -41,14 +48,17 @@ export async function POST(
     }
 
     // Check access control for umpires
-    let userRole = 'VIEWER';
+    let userRole = "VIEWER";
     let userId = null;
 
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     if (authHeader) {
       try {
-        const token = authHeader.replace('Bearer ', '');
-        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+        const token = authHeader.replace("Bearer ", "");
+        const decoded = jwt.verify(token, JWT_SECRET) as {
+          userId: string;
+          role: string;
+        };
         userRole = decoded.role;
         userId = decoded.userId;
       } catch (error) {
@@ -57,10 +67,10 @@ export async function POST(
     }
 
     // Check if umpire is accessing their own match
-    if (userRole === 'UMPIRE' && match.umpireId !== userId) {
+    if (userRole === "UMPIRE" && match.umpireId !== userId) {
       return NextResponse.json(
         { error: "You do not have access to this match" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -74,14 +84,14 @@ export async function POST(
     if (existingInnings) {
       return NextResponse.json(
         { error: "Innings already exists for this match" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Update match status to ONGOING when innings starts
     await matchesCollection.updateOne(
       { _id: new ObjectId(id) },
-      { $set: { status: "ONGOING", updatedAt: new Date() } }
+      { $set: { status: "ONGOING", updatedAt: new Date() } },
     );
 
     const result = await inningsCollection.insertOne({
@@ -89,6 +99,7 @@ export async function POST(
       teamId,
       inningsNumber: inningsNum,
       openingBatsmanId,
+      nonStrikerBatsmanId: nonStrikerBatsmanId || null,
       openingBowlerId,
       status: "ONGOING",
       totalRuns: 0,
@@ -99,9 +110,7 @@ export async function POST(
     });
 
     // Initialize batting stats for team players
-    const teamPlayers = await playersCollection
-      .find({ teamId })
-      .toArray();
+    const teamPlayers = await playersCollection.find({ teamId }).toArray();
 
     for (const player of teamPlayers) {
       const existingStats = await battingStatsCollection.findOne({
@@ -126,19 +135,20 @@ export async function POST(
         teamId,
         inningsNumber: inningsNum,
         openingBatsmanId,
+        nonStrikerBatsmanId: nonStrikerBatsmanId || null,
         openingBowlerId,
         status: "ONGOING",
         totalRuns: 0,
         totalWickets: 0,
         totalBalls: 0,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Error starting innings:", error);
     return NextResponse.json(
       { error: "Failed to start innings" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -146,7 +156,7 @@ export async function POST(
 // GET /api/matches/[id]/innings - Get all innings for a match
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -162,14 +172,17 @@ export async function GET(
     }
 
     // Check access control for umpires
-    let userRole = 'VIEWER';
+    let userRole = "VIEWER";
     let userId = null;
 
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     if (authHeader) {
       try {
-        const token = authHeader.replace('Bearer ', '');
-        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
+        const token = authHeader.replace("Bearer ", "");
+        const decoded = jwt.verify(token, JWT_SECRET) as {
+          userId: string;
+          role: string;
+        };
         userRole = decoded.role;
         userId = decoded.userId;
       } catch (error) {
@@ -178,10 +191,10 @@ export async function GET(
     }
 
     // Check if umpire is accessing their own match
-    if (userRole === 'UMPIRE' && match.umpireId !== userId) {
+    if (userRole === "UMPIRE" && match.umpireId !== userId) {
       return NextResponse.json(
         { error: "You do not have access to this match" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -194,13 +207,191 @@ export async function GET(
       innings.map((inning) => ({
         ...inning,
         id: inning._id?.toString(),
-      }))
+      })),
     );
   } catch (error) {
     console.error("Error fetching innings:", error);
     return NextResponse.json(
       { error: "Failed to fetch innings" },
-      { status: 500 }
+      { status: 500 },
+    );
+  }
+}
+
+// PATCH /api/matches/[id]/innings - Update innings fields
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const { inningsId, nonStrikerBatsmanId, openingBowlerId } = body;
+
+    if (!inningsId) {
+      return NextResponse.json(
+        { error: "Innings ID is required" },
+        { status: 400 },
+      );
+    }
+
+    const inningsCollection = await getInningsCollection();
+    const matchesCollection = await getMatchesCollection();
+
+    // Verify match exists
+    const match = await matchesCollection.findOne({
+      _id: new ObjectId(id),
+    });
+    if (!match) {
+      return NextResponse.json({ error: "Match not found" }, { status: 404 });
+    }
+
+    // Check access control for umpires
+    let userRole = "VIEWER";
+    let userId = null;
+
+    const authHeader = request.headers.get("authorization");
+    if (authHeader) {
+      try {
+        const token = authHeader.replace("Bearer ", "");
+        const decoded = jwt.verify(token, JWT_SECRET) as {
+          userId: string;
+          role: string;
+        };
+        userRole = decoded.role;
+        userId = decoded.userId;
+      } catch (error) {
+        // Token invalid, continue as VIEWER
+      }
+    }
+
+    // Check if umpire is accessing their own match
+    if (userRole === "UMPIRE" && match.umpireId !== userId) {
+      return NextResponse.json(
+        { error: "You do not have access to this match" },
+        { status: 403 },
+      );
+    }
+
+    const updateData: any = { updatedAt: new Date() };
+    if (nonStrikerBatsmanId !== undefined) {
+      updateData.nonStrikerBatsmanId = nonStrikerBatsmanId;
+    }
+    if (openingBowlerId !== undefined) {
+      updateData.openingBowlerId = openingBowlerId;
+    }
+
+    const result = await inningsCollection.updateOne(
+      { _id: new ObjectId(inningsId), matchId: id },
+      { $set: updateData },
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json({ error: "Innings not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(
+      { message: "Innings updated successfully" },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("Error updating innings:", error);
+    return NextResponse.json(
+      { error: "Failed to update innings" },
+      { status: 500 },
+    );
+  }
+}
+
+// PUT /api/matches/[id]/innings/[inningsId] - Completely replace/fix innings
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const {
+      inningsId,
+      openingBatsmanId,
+      nonStrikerBatsmanId,
+      openingBowlerId,
+    } = body;
+
+    if (!inningsId) {
+      return NextResponse.json(
+        { error: "Innings ID is required" },
+        { status: 400 },
+      );
+    }
+
+    const inningsCollection = await getInningsCollection();
+    const matchesCollection = await getMatchesCollection();
+
+    // Verify match exists
+    const match = await matchesCollection.findOne({
+      _id: new ObjectId(id),
+    });
+    if (!match) {
+      return NextResponse.json({ error: "Match not found" }, { status: 404 });
+    }
+
+    // Check access control for umpires
+    let userRole = "VIEWER";
+    let userId = null;
+
+    const authHeader = request.headers.get("authorization");
+    if (authHeader) {
+      try {
+        const token = authHeader.replace("Bearer ", "");
+        const decoded = jwt.verify(token, JWT_SECRET) as {
+          userId: string;
+          role: string;
+        };
+        userRole = decoded.role;
+        userId = decoded.userId;
+      } catch (error) {
+        // Token invalid, continue as VIEWER
+      }
+    }
+
+    // Check if umpire is accessing their own match
+    if (userRole === "UMPIRE" && match.umpireId !== userId) {
+      return NextResponse.json(
+        { error: "You do not have access to this match" },
+        { status: 403 },
+      );
+    }
+
+    const updateData: any = { updatedAt: new Date() };
+    if (openingBatsmanId !== undefined) {
+      updateData.openingBatsmanId = openingBatsmanId;
+    }
+    if (nonStrikerBatsmanId !== undefined) {
+      updateData.nonStrikerBatsmanId = nonStrikerBatsmanId;
+    }
+    if (openingBowlerId !== undefined) {
+      updateData.openingBowlerId = openingBowlerId;
+    }
+
+    const result = await inningsCollection.updateOne(
+      { _id: new ObjectId(inningsId), matchId: id },
+      { $set: updateData },
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json({ error: "Innings not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(
+      { message: "Innings updated successfully" },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("Error updating innings:", error);
+    return NextResponse.json(
+      { error: "Failed to update innings" },
+      { status: 500 },
     );
   }
 }

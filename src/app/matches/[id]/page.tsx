@@ -106,6 +106,11 @@ export default function MatchDetailPage() {
   const [showEndMatchForm, setShowEndMatchForm] = useState(false);
   const [endMatchComment, setEndMatchComment] = useState("");
   const [undoTimeRemaining, setUndoTimeRemaining] = useState(0);
+  const [coinTossResult, setCoinTossResult] = useState<"HEAD" | "TAIL" | null>(
+    null,
+  );
+  const [showCoinToss, setShowCoinToss] = useState(false);
+  const [isTossing, setIsTossing] = useState(false);
 
   // Check authentication on mount
   useEffect(() => {
@@ -185,6 +190,7 @@ export default function MatchDetailPage() {
         setBowlerId("");
         setCurrentRuns(0);
         setSelectedInnings(match.innings.length);
+        setShowCoinToss(false);
       }
     } catch (error) {
       console.error("Error starting innings:", error);
@@ -194,6 +200,15 @@ export default function MatchDetailPage() {
     }
   };
 
+  const tossCoin = () => {
+    setIsTossing(true);
+    // Simulate coin tossing animation (1.5 seconds)
+    setTimeout(() => {
+      const result = Math.random() < 0.5 ? "HEAD" : "TAIL";
+      setCoinTossResult(result);
+      setIsTossing(false);
+    }, 1500);
+  };
   const handleAddRuns = (runs: number) => {
     setCurrentRuns((prev) => Math.max(0, prev + runs));
   };
@@ -1031,34 +1046,174 @@ export default function MatchDetailPage() {
           </div>
         ) : match.innings.length === 0 ? (
           <section>
-            <div className="relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-12 text-center">
-              <h2 className="text-4xl font-black text-white mb-3">
-                🎯 Start Innings
-              </h2>
-              <p className="text-slate-400 mb-8">
-                Select which team will bat first
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button
-                  onClick={() => startInnings(match.teamA.id)}
-                  disabled={isSaving}
-                  className="py-4 px-6 bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-blue-500/50"
+            {showCoinToss && coinTossResult === null ? (
+              <div className="relative overflow-hidden rounded-xl border border-yellow-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-12 text-center shadow-2xl">
+                <style>{`
+                  @keyframes coinFlip {
+                    0% { transform: rotateY(0) rotateZ(0); }
+                    25% { transform: rotateY(90deg) rotateZ(10deg); }
+                    50% { transform: rotateY(180deg) rotateZ(0); }
+                    75% { transform: rotateY(270deg) rotateZ(-10deg); }
+                    100% { transform: rotateY(360deg) rotateZ(0); }
+                  }
+                  @keyframes bounce {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-20px); }
+                  }
+                  .coin-flip {
+                    animation: coinFlip 1.5s ease-in-out;
+                    transform-style: preserve-3d;
+                  }
+                  .bounce-animation {
+                    animation: bounce 1.5s ease-in-out;
+                  }
+                `}</style>
+                <h2 className="text-4xl font-black text-white mb-3">
+                  🪙 Coin Toss
+                </h2>
+                <p className="text-slate-400 mb-8">
+                  Tap the coin to toss and decide who bats first!
+                </p>
+                <div className="flex justify-center mb-8">
+                  <button
+                    onClick={tossCoin}
+                    disabled={isTossing}
+                    className={`w-32 h-32 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center text-6xl shadow-2xl hover:shadow-yellow-500/50 hover:scale-110 transform transition-all cursor-pointer active:scale-95 disabled:opacity-75 ${
+                      isTossing ? "coin-flip" : ""
+                    }`}
+                  >
+                    🪙
+                  </button>
+                </div>
+                {isTossing && (
+                  <div className="mb-4">
+                    <div className="flex justify-center gap-2">
+                      <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"></div>
+                      <div
+                        className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"
+                        style={{ animationDelay: "0.1s" }}
+                      ></div>
+                      <div
+                        className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"
+                        style={{ animationDelay: "0.2s" }}
+                      ></div>
+                    </div>
+                    <p className="text-yellow-300 text-sm mt-2 font-bold">
+                      Tossing...
+                    </p>
+                  </div>
+                )}
+                <p
+                  className={`text-slate-300 text-sm mb-6 ${isTossing ? "invisible" : ""}`}
                 >
-                  {isSaving
-                    ? "⏳ Starting..."
-                    : `▶ ${match.teamA.name} Innings`}
-                </button>
+                  Click the coin to toss
+                </p>
                 <button
-                  onClick={() => startInnings(match.teamB.id)}
-                  disabled={isSaving}
-                  className="py-4 px-6 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-green-500/50"
+                  onClick={() => setShowCoinToss(false)}
+                  disabled={isTossing}
+                  className="text-slate-400 hover:text-slate-300 text-sm underline disabled:opacity-50"
                 >
-                  {isSaving
-                    ? "⏳ Starting..."
-                    : `▶ ${match.teamB.name} Innings`}
+                  Skip coin toss
                 </button>
               </div>
-            </div>
+            ) : coinTossResult ? (
+              <div className="relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8 sm:p-12 text-center shadow-2xl">
+                <h2 className="text-3xl sm:text-4xl font-black text-white mb-6">
+                  🎯 Coin Result
+                </h2>
+                <div
+                  className={`inline-block px-6 sm:px-8 py-3 sm:py-4 rounded-full text-2xl sm:text-3xl font-black mb-8 shadow-lg animate-bounce ${
+                    coinTossResult === "HEAD"
+                      ? "bg-blue-600 text-white"
+                      : "bg-orange-600 text-white"
+                  }`}
+                >
+                  {coinTossResult === "HEAD" ? "👤 HEAD" : "🪙 TAIL"}
+                </div>
+                <p className="text-slate-400 mb-10 text-sm sm:text-base font-semibold">
+                  {coinTossResult === "HEAD" ? "HEADS won!" : "TAILS won!"}
+                </p>
+                <p className="text-slate-300 mb-8 text-xs sm:text-sm">
+                  Choose which team bats first:
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto">
+                  <button
+                    onClick={() => startInnings(match.teamA.id)}
+                    disabled={isSaving}
+                    className="group relative py-4 px-4 sm:px-6 bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-blue-500/50 transform hover:scale-105 active:scale-95 overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-white/10 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+                    <span className="relative flex flex-col items-center gap-1">
+                      <span className="text-lg">▶</span>
+                      <span className="text-xs sm:text-sm font-semibold truncate">
+                        {match.teamA.name}
+                      </span>
+                      <span className="text-xs text-blue-100">Innings</span>
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => startInnings(match.teamB.id)}
+                    disabled={isSaving}
+                    className="group relative py-4 px-4 sm:px-6 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-green-500/50 transform hover:scale-105 active:scale-95 overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-white/10 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+                    <span className="relative flex flex-col items-center gap-1">
+                      <span className="text-lg">▶</span>
+                      <span className="text-xs sm:text-sm font-semibold truncate">
+                        {match.teamB.name}
+                      </span>
+                      <span className="text-xs text-green-100">Innings</span>
+                    </span>
+                  </button>
+                </div>
+                <button
+                  onClick={() => setCoinTossResult(null)}
+                  className="mt-6 text-slate-400 hover:text-slate-300 text-sm underline transition"
+                >
+                  Toss again
+                </button>
+              </div>
+            ) : (
+              <div className="relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-12 text-center shadow-2xl">
+                <h2 className="text-4xl font-black text-white mb-3">
+                  🎯 Start Innings
+                </h2>
+                <p className="text-slate-400 mb-8">
+                  Choose how to decide who bats first
+                </p>
+                <div className="grid grid-cols-1 gap-4 mb-6 max-w-md mx-auto">
+                  <button
+                    onClick={() => setShowCoinToss(true)}
+                    className="py-4 px-6 bg-linear-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-yellow-500/50"
+                  >
+                    🪙 Coin Toss
+                  </button>
+                </div>
+                <p className="text-slate-400 mb-6 text-sm">
+                  Or select team directly
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    onClick={() => startInnings(match.teamA.id)}
+                    disabled={isSaving}
+                    className="py-4 px-6 bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-blue-500/50"
+                  >
+                    {isSaving
+                      ? "⏳ Starting..."
+                      : `▶ ${match.teamA.name} Innings`}
+                  </button>
+                  <button
+                    onClick={() => startInnings(match.teamB.id)}
+                    disabled={isSaving}
+                    className="py-4 px-6 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-green-500/50"
+                  >
+                    {isSaving
+                      ? "⏳ Starting..."
+                      : `▶ ${match.teamB.name} Innings`}
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
         ) : (
           <>
