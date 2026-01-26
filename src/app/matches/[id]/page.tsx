@@ -19,6 +19,7 @@ interface Ball {
   id: string;
   ballNumber: number;
   overNumber: number;
+  ballPositionInOver?: number;
   runs: number;
   ballType: string;
   strikerPlayerId?: string;
@@ -385,14 +386,56 @@ export default function MatchDetailPage() {
     if (!match || !match.innings[selectedInnings]) return;
     const innings = match.innings[selectedInnings];
 
-    if (!innings.balls || innings.balls.length === 0) {
-      setError("No balls to delete");
+    // Check if there are any balls or extras to delete
+    const hasBalls = innings.balls && innings.balls.length > 0;
+    const hasExtras = innings.extras && innings.extras.length > 0;
+
+    if (!hasBalls && !hasExtras) {
+      setError("No balls or extras to delete");
       return;
     }
 
-    const lastBall = innings.balls[innings.balls.length - 1];
+    // Find the actual last ball by sorting (if any)
+    let lastBall: Ball | null = null;
+    let sortedBalls: Ball[] = [];
 
-    if (!confirm("Are you sure you want to delete the last ball?")) {
+    if (hasBalls) {
+      sortedBalls = [...innings.balls].sort((a, b) => {
+        // Sort by ID (ObjectId) which is chronologically ordered
+        const idA = a.id || "";
+        const idB = b.id || "";
+        if (idA < idB) return -1;
+        if (idA > idB) return 1;
+        return 0;
+      });
+      lastBall = sortedBalls[sortedBalls.length - 1];
+    }
+
+    // Find the actual last extra by sorting (if any)
+    let lastExtra: Extra | null = null;
+    if (hasExtras) {
+      const sortedExtras = [...(innings.extras || [])].sort((a, b) => {
+        const idA = a.id || "";
+        const idB = b.id || "";
+        if (idA < idB) return -1;
+        if (idA > idB) return 1;
+        return 0;
+      });
+      lastExtra = sortedExtras[sortedExtras.length - 1];
+    }
+
+    // Determine which is more recent: last ball or last extra
+    let deleteType: "ball" | "extra" = "ball";
+    if (lastBall && lastExtra) {
+      // Compare IDs to see which is more recent
+      if ((lastExtra.id || "") > (lastBall.id || "")) {
+        deleteType = "extra";
+      }
+    } else if (lastExtra && !lastBall) {
+      deleteType = "extra";
+    }
+
+    if (!confirm("Are you sure you want to delete the last delivery?")) {
       return;
     }
 
@@ -401,9 +444,9 @@ export default function MatchDetailPage() {
     let previousStrikerPlayerId = "";
     let previousNonStrikerPlayerId = "";
 
-    if (innings.balls.length >= 2) {
+    if (sortedBalls.length >= 2) {
       // If there are at least 2 balls, get the previous ball (before the one we're deleting)
-      const previousBall = innings.balls[innings.balls.length - 2];
+      const previousBall = sortedBalls[sortedBalls.length - 2];
       previousStrikerPlayerId = previousBall.strikerPlayerId || "";
       previousNonStrikerPlayerId = previousBall.nonStrikerPlayerId || "";
     }
@@ -413,15 +456,10 @@ export default function MatchDetailPage() {
     try {
       const token = localStorage.getItem("authToken");
 
-      // Check if this ball has an associated wicket
-      const wicket = (innings.wickets || []).find(
-        (w: any) => w.ballId === lastBall.id,
-      );
-
-      // If there's a wicket, delete it first
-      if (wicket) {
-        const wicketDeleteResponse = await fetch(
-          `/api/matches/${matchId}/innings/${innings.id}/wickets/${wicket.id}`,
+      if (deleteType === "extra" && lastExtra) {
+        // Delete the extra
+        const extraDeleteResponse = await fetch(
+          `/api/matches/${matchId}/innings/${innings.id}/extras/${lastExtra.id}`,
           {
             method: "DELETE",
             headers: {
@@ -431,43 +469,116 @@ export default function MatchDetailPage() {
           },
         );
 
-        if (!wicketDeleteResponse.ok) {
-          const wicketError = await wicketDeleteResponse.json();
-          setError(wicketError.error || "Failed to delete wicket");
+        if (!extraDeleteResponse.ok) {
+          const extraError = await extraDeleteResponse.json();
+          setError(extraError.error || "Failed to delete extra");
           setIsSaving(false);
           return;
         }
-      }
 
-      // Now delete the ball
-      const response = await fetch(
-        `/api/matches/${matchId}/innings/${innings.id}/balls/${lastBall.id}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        },
-      );
-
-      if (response.ok) {
+        // Refetch match data
         setCurrentRuns(0);
-
-        // Restore striker and non-striker to the previous ball's positions
-        setStrikerPlayerId(previousStrikerPlayerId);
-        setNonStrikerPlayerId(previousNonStrikerPlayerId);
-
-        // Refetch match data immediately
         await fetchMatch();
-      } else {
-        const data = await response.json();
-        setError(data.error || "Failed to delete ball");
+      } else if (deleteType === "ball" && lastBall) {
+        // Check if this ball has an associated wicket
+        const wicket = (innings.wickets || []).find(
+          (w: any) => w.ballId === lastBall.id,
+        );
+
+        // If there's a wicket, delete it first
+        if (wicket) {
+          const wicketDeleteResponse = await fetch(
+            `/api/matches/${matchId}/innings/${innings.id}/wickets/${wicket.id}`,
+            {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+            },
+          );
+
+          if (!wicketDeleteResponse.ok) {
+            const wicketError = await wicketDeleteResponse.json();
+            setError(wicketError.error || "Failed to delete wicket");
+            setIsSaving(false);
+            return;
+          }
+        }
+
+        // Check if this ball has associated extras (wide, no ball, etc.)
+        // If this is a wide or no ball, look for the most recent extra of that type
+        if (lastBall.ballType && lastBall.ballType !== "LEGAL") {
+          // Sort extras by creation time and find the most recent one matching the ball type
+          const sortedExtras = [...(innings.extras || [])].sort(
+            (a: any, b: any) => {
+              const idA = a.id || "";
+              const idB = b.id || "";
+              if (idA < idB) return -1;
+              if (idA > idB) return 1;
+              return 0;
+            },
+          );
+
+          // Find the most recent extra that matches this ball type
+          const matchingExtra = sortedExtras.reverse().find((extra: any) => {
+            if (lastBall.ballType === "WIDE") return extra.extraType === "WIDE";
+            if (lastBall.ballType === "NO_BALL")
+              return extra.extraType === "NO_BALL";
+            return false;
+          });
+
+          // Delete the matching extra if found
+          if (matchingExtra) {
+            const extraDeleteResponse = await fetch(
+              `/api/matches/${matchId}/innings/${innings.id}/extras/${matchingExtra.id}`,
+              {
+                method: "DELETE",
+                headers: {
+                  "Content-Type": "application/json",
+                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+              },
+            );
+
+            if (!extraDeleteResponse.ok) {
+              const extraError = await extraDeleteResponse.json();
+              console.warn("Failed to delete extra:", extraError);
+              // Continue even if extra deletion fails
+            }
+          }
+        }
+
+        // Now delete the ball
+        const response = await fetch(
+          `/api/matches/${matchId}/innings/${innings.id}/balls/${lastBall.id}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          },
+        );
+
+        if (response.ok) {
+          setCurrentRuns(0);
+
+          // Restore striker and non-striker to the previous ball's positions
+          setStrikerPlayerId(previousStrikerPlayerId);
+          setNonStrikerPlayerId(previousNonStrikerPlayerId);
+
+          // Refetch match data immediately
+          await fetchMatch();
+        } else {
+          const data = await response.json();
+          setError(data.error || "Failed to delete ball");
+        }
       }
     } catch (error) {
-      console.error("Error deleting ball:", error);
+      console.error("Error deleting delivery:", error);
       setError(
-        "Error deleting ball: " +
+        "Error deleting delivery: " +
           (error instanceof Error ? error.message : "Unknown error"),
       );
     } finally {
@@ -2068,14 +2179,32 @@ export default function MatchDetailPage() {
                           },
                         );
 
-                        // Sort deliveries within each over by timestamp to maintain chronological order
+                        // Sort deliveries within each over by position to maintain correct order
                         Object.keys(ballsByOver).forEach(
                           (overNumStr: string) => {
                             const overNum = parseInt(overNumStr);
                             ballsByOver[overNum].sort((a: any, b: any) => {
-                              const timeA = new Date(a.timestamp).getTime();
-                              const timeB = new Date(b.timestamp).getTime();
-                              return timeA - timeB;
+                              // Primary: Use ballPositionInOver if available (most reliable)
+                              if (
+                                typeof a.ballPositionInOver === "number" &&
+                                typeof b.ballPositionInOver === "number"
+                              ) {
+                                return (
+                                  a.ballPositionInOver - b.ballPositionInOver
+                                );
+                              }
+
+                              // Fallback 1: Use ID (ObjectId string) for chronological sorting
+                              const idA = a.id || a._id || "";
+                              const idB = b.id || b._id || "";
+
+                              if (idA && idB) {
+                                if (idA < idB) return -1;
+                                if (idA > idB) return 1;
+                              }
+
+                              // Fallback 2: Use ballNumber
+                              return (a.ballNumber || 0) - (b.ballNumber || 0);
                             });
                           },
                         );

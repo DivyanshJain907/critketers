@@ -136,17 +136,20 @@ export async function POST(
       };
     }
 
-    // Count existing balls in this over to determine next ballNumber
+    // Count existing balls in this over to determine next ballNumber and position
     const ballsInOver = await ballsCollection
       .find({ overId: over._id?.toString() })
       .toArray();
     const ballNumber = ballsInOver.length + 1;
+    const ballPositionInOver = ballsInOver.length; // 0-based position within the over
 
     // Create ball
     const ballResult = await ballsCollection.insertOne({
       inningsId,
       overId: over._id?.toString(),
       ballNumber,
+      overNumber, // Store which over this ball belongs to
+      ballPositionInOver, // Store position within the over (0, 1, 2, 3, 4, 5...)
       strikerPlayerId,
       bowlerId,
       runs,
