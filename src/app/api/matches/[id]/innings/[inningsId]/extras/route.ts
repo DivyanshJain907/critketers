@@ -98,17 +98,30 @@ export async function POST(
       createdAt: new Date(),
     });
 
-    // Update innings total runs only (don't increment totalBalls for extras)
+    // Bye and Leg Bye count as normal balls (increment totalBalls)
+    // Wide and No-Ball don't count as balls, only their runs are added
+    const isBallCountingExtra = extraType === "BYE" || extraType === "LEG_BYE";
+    
+    // Update innings stats
+    const updateObj: any = { $inc: { totalRuns: runs } };
+    if (isBallCountingExtra) {
+      updateObj.$inc.totalBalls = 1;
+    }
+    
     await inningsCollection.updateOne(
       { _id: new ObjectId(inningsId) },
-      { $inc: { totalRuns: runs } },
+      updateObj,
     );
 
-    // Update over runs if applicable
+    // Update over runs and legal balls count if applicable
     if (overId) {
+      const overUpdate: any = { $inc: { runs } };
+      if (isBallCountingExtra) {
+        overUpdate.$inc.legalBalls = 1;
+      }
       await oversCollection.updateOne(
         { _id: new ObjectId(overId) },
-        { $inc: { runs } },
+        overUpdate,
       );
     }
 

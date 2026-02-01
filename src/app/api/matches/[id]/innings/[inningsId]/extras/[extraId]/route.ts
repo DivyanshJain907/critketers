@@ -70,27 +70,41 @@ export async function DELETE(
     // Delete the extra
     await extrasCollection.deleteOne({ _id: new ObjectId(extraId) });
 
+    // Bye and Leg Bye count as normal balls (decrement totalBalls)
+    // Wide and No-Ball don't count as balls, only their runs are subtracted
+    const isBallCountingExtra = extra.extraType === "BYE" || extra.extraType === "LEG_BYE";
+    
     // Update innings totals (decrement runs)
     const runsDecrement = extra.runs || 0;
+    const updateObj: any = {
+      $inc: {
+        totalRuns: -runsDecrement,
+      },
+      $set: { updatedAt: new Date() },
+    };
+    
+    if (isBallCountingExtra) {
+      updateObj.$inc.totalBalls = -1;
+    }
+    
     await inningsCollection.updateOne(
       { _id: new ObjectId(inningsId) },
-      {
-        $inc: {
-          totalRuns: -runsDecrement,
-        },
-        $set: { updatedAt: new Date() },
-      },
+      updateObj,
     );
 
     // Update over runs if applicable
     if (extra.overId) {
+      const overUpdate: any = {
+        $inc: {
+          runs: -runsDecrement,
+        },
+      };
+      if (isBallCountingExtra) {
+        overUpdate.$inc.legalBalls = -1;
+      }
       await oversCollection.updateOne(
         { _id: new ObjectId(extra.overId) },
-        {
-          $inc: {
-            runs: -runsDecrement,
-          },
-        },
+        overUpdate,
       );
     }
 

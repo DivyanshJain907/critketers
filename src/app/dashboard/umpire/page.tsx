@@ -274,13 +274,13 @@ export default function UmpireDashboard() {
 
                     {/* View and Delete Buttons */}
                     <div className="flex gap-3">
-                      <Link
-                        href={`/matches/${match._id}/live-score`}
+                      <button
+                        onClick={() => window.location.href = `/matches/${match._id}/live-score`}
                         className="flex-1 py-2 bg-green-600 hover:bg-green-500 active:bg-green-700 text-white font-bold text-sm rounded-lg transition-all flex items-center justify-center gap-1"
                       >
                         View Live
                         <span>→</span>
-                      </Link>
+                      </button>
                       <button
                         onClick={(e) => handleDeleteMatch(match._id, e)}
                         className="px-3 py-2 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-bold text-sm rounded-lg transition-all"
