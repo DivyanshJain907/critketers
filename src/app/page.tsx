@@ -252,23 +252,34 @@ export default function LandingPage() {
                   ))}
               </div>
 
-              {/* Pagination Controls */}
+              {/* Pagination Controls - Slider Style */}
               {liveMatches.length > matchesPerPage && (
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
+                <div className="mt-8 flex items-center justify-center gap-3">
                   <button
                     onClick={() =>
                       setLiveMatchesPage((prev) => Math.max(0, prev - 1))
                     }
                     disabled={liveMatchesPage === 0}
-                    className="w-full sm:w-auto px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg font-semibold hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    className="p-2 text-xl hover:text-blue-400 disabled:text-slate-600 disabled:cursor-not-allowed transition"
                   >
-                    ← Previous
+                    ◀
                   </button>
 
-                  <span className="text-slate-400 font-semibold text-center sm:text-left">
-                    {liveMatchesPage + 1} of{" "}
-                    {Math.ceil(liveMatches.length / matchesPerPage)}
-                  </span>
+                  <div className="flex gap-2">
+                    {Array.from({ length: Math.ceil(liveMatches.length / matchesPerPage) }).map(
+                      (_, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setLiveMatchesPage(idx)}
+                          className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                            idx === liveMatchesPage
+                              ? "bg-blue-500 w-8"
+                              : "bg-slate-600 hover:bg-slate-500"
+                          }`}
+                        />
+                      ),
+                    )}
+                  </div>
 
                   <button
                     onClick={() =>
@@ -283,9 +294,9 @@ export default function LandingPage() {
                       liveMatchesPage >=
                       Math.ceil(liveMatches.length / matchesPerPage) - 1
                     }
-                    className="w-full sm:w-auto px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg font-semibold hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    className="p-2 text-xl hover:text-green-400 disabled:text-slate-600 disabled:cursor-not-allowed transition"
                   >
-                    Next →
+                    ▶
                   </button>
                 </div>
               )}
