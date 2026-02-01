@@ -113,6 +113,7 @@ export default function MatchDetailPage() {
   );
   const [showCoinToss, setShowCoinToss] = useState(false);
   const [isTossing, setIsTossing] = useState(false);
+  const [refetchTimer, setRefetchTimer] = useState<NodeJS.Timeout | null>(null);
 
   // Check authentication on mount
   useEffect(() => {
@@ -269,42 +270,44 @@ export default function MatchDetailPage() {
         };
         setBallAnimations((prev) => [newAnimatedBall, ...prev.slice(0, 9)]);
 
-        // Refetch the entire match data to ensure all overs and balls are properly synced
-        // This ensures smooth over transitions and accurate ball grouping
-        setTimeout(() => {
-          fetchMatch().then(() => {
-            // After fetching, check if we need to swap striker/non-striker
-            const newBalls = match.innings[selectedInnings].totalBalls + 1;
-            const newOverNumber = Math.floor(newBalls / 6);
-            const previousOverNumber = Math.floor(innings.totalBalls / 6);
+        // Optimistically update local state immediately (no waiting)
+        const newBalls = innings.totalBalls + 1;
+        const newOverNumber = Math.floor(newBalls / 6);
+        const ballsInCurrentOver = innings.totalBalls % 6;
+        const isLastBallOfOver = ballsInCurrentOver === 5;
+        const overCompleted = newOverNumber > overNumber;
 
-            // Check if this was the last ball of the over (6th ball)
-            const ballsInCurrentOver = innings.totalBalls % 6;
-            const isLastBallOfOver = ballsInCurrentOver === 5; // 6th ball is index 5
+        // Update local innings state
+        setMatch((prevMatch) => {
+          if (!prevMatch) return prevMatch;
+          const updatedInnings = { ...prevMatch.innings[selectedInnings] };
+          updatedInnings.totalBalls = newBalls;
+          updatedInnings.totalRuns = (updatedInnings.totalRuns || 0) + currentRuns;
+          updatedInnings.balls = [...(updatedInnings.balls || []), data];
+          
+          const newInnings = [...prevMatch.innings];
+          newInnings[selectedInnings] = updatedInnings;
+          return { ...prevMatch, innings: newInnings };
+        });
 
-            // Determine if over completed
-            const overCompleted = newOverNumber > previousOverNumber;
+        // Update striker/non-striker immediately
+        if (currentRuns === 1 && !isLastBallOfOver) {
+          setStrikerPlayerId(nonStrikerId);
+          setNonStrikerPlayerId(strikerPlayerId);
+        }
 
-            // During an over: If 1 run taken AND NOT on the last ball, they swap
-            if (currentRuns === 1 && !isLastBallOfOver) {
-              setStrikerPlayerId(nonStrikerPlayerId);
-              setNonStrikerPlayerId(strikerPlayerId);
-            }
+        if (overCompleted && !(currentRuns === 1)) {
+          setStrikerPlayerId(nonStrikerId);
+          setNonStrikerPlayerId(strikerPlayerId);
+        }
 
-            // At end of over: Swap UNLESS the last ball had 1 run
-            if (overCompleted && !(currentRuns === 1)) {
-              setStrikerPlayerId(nonStrikerPlayerId);
-              setNonStrikerPlayerId(strikerPlayerId);
-            }
-
-            // Show bowler change popup when over completes
-            if (overCompleted) {
-              setShowBowlerChangeForm(true);
-            }
-          });
-        }, 300);
+        if (overCompleted) {
+          setShowBowlerChangeForm(true);
+        }
 
         setCurrentRuns(0);
+        // Schedule a batched refetch instead of immediate full fetch
+        scheduleRefetch();
       } else {
         console.error("Ball recording error:", data);
         setError(data.error || "Failed to record ball");
@@ -318,6 +321,15 @@ export default function MatchDetailPage() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Schedule a batched refetch to avoid too many requests
+  const scheduleRefetch = () => {
+    if (refetchTimer) clearTimeout(refetchTimer);
+    const timer = setTimeout(() => {
+      fetchMatch();
+    }, 800); // Batch updates: wait 800ms before refetching
+    setRefetchTimer(timer);
   };
 
   const handleRecordExtra = async (extraType: string) => {
@@ -364,10 +376,25 @@ export default function MatchDetailPage() {
 
       if (response.ok) {
         setError("");
-        // Refetch to get the updated data with extras
-        setTimeout(() => {
-          fetchMatch();
-        }, 300);
+        
+        // Optimistically update local state immediately
+        setMatch((prevMatch) => {
+          if (!prevMatch) return prevMatch;
+          const updatedInnings = { ...prevMatch.innings[selectedInnings] };
+          updatedInnings.totalRuns = (updatedInnings.totalRuns || 0) + data.runs;
+          // For bye/leg bye, also increment totalBalls
+          if (data.extraType === "BYE" || data.extraType === "LEG_BYE") {
+            updatedInnings.totalBalls = (updatedInnings.totalBalls || 0) + 1;
+          }
+          updatedInnings.extras = [...(updatedInnings.extras || []), data];
+          
+          const newInnings = [...prevMatch.innings];
+          newInnings[selectedInnings] = updatedInnings;
+          return { ...prevMatch, innings: newInnings };
+        });
+        
+        // Schedule a batched refetch
+        scheduleRefetch();
       } else {
         setError(data.error || "Failed to record extra");
       }
@@ -568,8 +595,8 @@ export default function MatchDetailPage() {
           setStrikerPlayerId(previousStrikerPlayerId);
           setNonStrikerPlayerId(previousNonStrikerPlayerId);
 
-          // Refetch match data immediately
-          await fetchMatch();
+          // Schedule a batched refetch instead of immediate fetch
+          scheduleRefetch();
         } else {
           const data = await response.json();
           setError(data.error || "Failed to delete ball");

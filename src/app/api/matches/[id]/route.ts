@@ -110,12 +110,12 @@ export async function GET(
 
         const extras = await extrasCollection
           .find({ inningsId: inning._id?.toString() })
-          .sort({ createdAt: 1 })
+          .sort({ createdAt: -1 })
           .toArray();
 
         const wickets = await wicketsCollection
           .find({ inningsId: inning._id?.toString() })
-          .sort({ createdAt: 1 })
+          .sort({ createdAt: -1 })
           .toArray();
 
         return {
