@@ -196,7 +196,7 @@ prisma/
 ✅ Over completion validation
 ✅ Innings completion logic
 
-## 🚀 Deployment
+## Deployment
 
 ### Deploy to Vercel
 
