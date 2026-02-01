@@ -84,7 +84,7 @@ Visit `http://localhost:3000`
 - Live scoring interface
 - Statistics and reports
 
-### Team Management
+### Team 
 - Create teams with short codes
 - Add/manage players
 - Assign player roles

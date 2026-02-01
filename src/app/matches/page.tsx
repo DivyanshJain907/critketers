@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useState, useEffect } from "react";
+import Link from "next/link";
 
 interface Team {
   id: string;
@@ -26,62 +26,69 @@ export default function MatchesPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState({
-    name: '',
-    teamAId: '',
-    teamBId: '',
-    oversLimit: '20',
+    name: "",
+    teamAId: "",
+    teamBId: "",
+    oversLimit: "20",
   });
 
   useEffect(() => {
     // Check if user is logged in
-    const token = localStorage.getItem('authToken');
-    const role = localStorage.getItem('userRole');
-    
+    const token = localStorage.getItem("authToken");
+    const role = localStorage.getItem("userRole");
+
     setIsLoggedIn(!!token);
     setUserRole(role || null);
 
-    Promise.all([fetchMatches(), fetchTeams()]).finally(() => setLoading(false));
+    Promise.all([fetchMatches(), fetchTeams()]).finally(() =>
+      setLoading(false),
+    );
   }, []);
 
   const fetchMatches = async () => {
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch('/api/matches', {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      const token = localStorage.getItem("authToken");
+      const response = await fetch("/api/matches", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await response.json();
       setMatches(data);
     } catch (error) {
-      console.error('Error fetching matches:', error);
+      console.error("Error fetching matches:", error);
     }
   };
 
   const fetchTeams = async () => {
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch('/api/teams', {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      const token = localStorage.getItem("authToken");
+      const response = await fetch("/api/teams", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await response.json();
       setTeams(data);
     } catch (error) {
-      console.error('Error fetching teams:', error);
+      console.error("Error fetching teams:", error);
     }
   };
 
   const handleCreateMatch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.teamAId || !formData.teamBId || formData.teamAId === formData.teamBId) return;
+    if (
+      !formData.teamAId ||
+      !formData.teamBId ||
+      formData.teamAId === formData.teamBId
+    )
+      return;
 
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch('/api/matches', {
-        method: 'POST',
+      const token = localStorage.getItem("authToken");
+      const response = await fetch("/api/matches", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           name: formData.name || undefined,
@@ -92,27 +99,59 @@ export default function MatchesPage() {
       });
 
       if (response.ok) {
-        setFormData({ name: '', teamAId: '', teamBId: '', oversLimit: '20' });
+        setFormData({ name: "", teamAId: "", teamBId: "", oversLimit: "20" });
         setShowCreateForm(false);
         fetchMatches();
       }
     } catch (error) {
-      console.error('Error creating match:', error);
+      console.error("Error creating match:", error);
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'NOT_STARTED':
-      case 'UPCOMING':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
-      case 'ONGOING':
-      case 'LIVE':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'COMPLETED':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      case "NOT_STARTED":
+      case "UPCOMING":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200";
+      case "ONGOING":
+      case "LIVE":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      case "COMPLETED":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
       default:
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+    }
+  };
+
+  const handleDeleteMatch = async (e: React.MouseEvent, matchId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this match? This action cannot be undone.",
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`/api/matches/${matchId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        fetchMatches();
+      } else {
+        alert("Failed to delete match");
+      }
+    } catch (error) {
+      console.error("Error deleting match:", error);
+      alert("Error deleting match");
     }
   };
 
@@ -121,13 +160,23 @@ export default function MatchesPage() {
       {/* Animated Background */}
       <div className="pointer-events-none">
         {/* Dot Pattern */}
-        <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+        <svg
+          className="absolute inset-0 w-full h-full opacity-20"
+          xmlns="http://www.w3.org/2000/svg"
+        >
           <defs>
-            <pattern id="dots" x="30" y="30" width="30" height="30" patternUnits="userSpaceOnUse">
-              <circle cx="15" cy="15" r="1.5" fill="#06b6d4"/>
+            <pattern
+              id="dots"
+              x="30"
+              y="30"
+              width="30"
+              height="30"
+              patternUnits="userSpaceOnUse"
+            >
+              <circle cx="15" cy="15" r="1.5" fill="#06b6d4" />
             </pattern>
           </defs>
-          <rect width="100%" height="100%" fill="url(#dots)"/>
+          <rect width="100%" height="100%" fill="url(#dots)" />
         </svg>
       </div>
 
@@ -135,10 +184,18 @@ export default function MatchesPage() {
       <header className="z-50 border-b border-slate-800 backdrop-blur-md bg-slate-950/50 sticky top-0">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-0 flex justify-between items-center sm:h-24">
           <div className="flex items-center gap-2 sm:gap-3">
-            <img src="/logo.png" alt="CricKeters" className="h-12 w-12 sm:h-20 sm:w-20 lg:h-32 lg:w-32 object-contain" />
+            <img
+              src="/logo.png"
+              alt="CricKeters"
+              className="h-12 w-12 sm:h-20 sm:w-20 lg:h-32 lg:w-32 object-contain"
+            />
             <div className="hidden sm:block">
-              <h1 className="text-xl sm:text-2xl font-black bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Matches</h1>
-              <p className="text-xs text-slate-400 font-semibold tracking-widest">CREATE & MANAGE MATCHES</p>
+              <h1 className="text-xl sm:text-2xl font-black bg-linear-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                Matches
+              </h1>
+              <p className="text-xs text-slate-400 font-semibold tracking-widest">
+                CREATE & MANAGE MATCHES
+              </p>
             </div>
           </div>
           {isLoggedIn && (
@@ -158,76 +215,104 @@ export default function MatchesPage() {
         {!isLoggedIn && (
           <div className="relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-4 sm:p-6 mb-8 sm:mb-12">
             <p className="text-cyan-300 text-sm sm:text-base">
-              👁️ <span className="font-semibold">Viewing as guest</span> • No login required to view matches
+              👁️ <span className="font-semibold">Viewing as guest</span> • No
+              login required to view matches
             </p>
           </div>
         )}
 
         {/* Create Match Button - Only for Umpire/Admin */}
-        {(userRole === 'UMPIRE' || userRole === 'ADMIN') && (
+        {(userRole === "UMPIRE" || userRole === "ADMIN") && (
           <section className="mb-8 sm:mb-12">
             <button
               onClick={() => setShowCreateForm(!showCreateForm)}
               className="w-full sm:w-auto bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold py-3 px-4 sm:px-8 rounded-lg transition-all shadow-lg hover:shadow-cyan-500/50 text-sm sm:text-base"
             >
-              {showCreateForm ? '✕ Cancel' : '+ Create New Match'}
+              {showCreateForm ? "✕ Cancel" : "+ Create New Match"}
             </button>
           </section>
         )}
 
         {/* Create Match Form */}
-        {showCreateForm && (userRole === 'UMPIRE' || userRole === 'ADMIN') && (
+        {showCreateForm && (userRole === "UMPIRE" || userRole === "ADMIN") && (
           <section className="mb-8 sm:mb-12">
             <div className="relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-4 sm:p-8">
-              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">🎯 Create New Match</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
+                🎯 Create New Match
+              </h2>
               <form onSubmit={handleCreateMatch} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs sm:text-sm font-bold text-cyan-300 mb-2 sm:mb-3">Match Name (Optional)</label>
+                    <label className="block text-xs sm:text-sm font-bold text-cyan-300 mb-2 sm:mb-3">
+                      Match Name (Optional)
+                    </label>
                     <input
                       type="text"
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
                       placeholder="e.g., Championship Final"
                       className="w-full px-3 sm:px-4 py-3 bg-slate-700/50 border border-cyan-500/30 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs sm:text-sm font-bold text-cyan-300 mb-2 sm:mb-3">Overs Limit</label>
+                    <label className="block text-xs sm:text-sm font-bold text-cyan-300 mb-2 sm:mb-3">
+                      Overs Limit
+                    </label>
                     <input
                       type="number"
+                      title="Overs limit for the match"
                       value={formData.oversLimit}
-                      onChange={(e) => setFormData({ ...formData, oversLimit: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, oversLimit: e.target.value })
+                      }
                       className="w-full px-3 sm:px-4 py-3 bg-slate-700/50 border border-cyan-500/30 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition text-sm"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs sm:text-sm font-bold text-cyan-300 mb-2 sm:mb-3">Team A</label>
+                    <label className="block text-xs sm:text-sm font-bold text-cyan-300 mb-2 sm:mb-3">
+                      Team A
+                    </label>
                     <select
+                      title="Select Team A"
                       value={formData.teamAId}
-                      onChange={(e) => setFormData({ ...formData, teamAId: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, teamAId: e.target.value })
+                      }
                       className="w-full px-3 sm:px-4 py-3 bg-slate-700/50 border border-cyan-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition text-sm"
                       required
                     >
                       <option value="">Select Team A</option>
                       {teams.map((team) => (
-                        <option key={team.id} value={team.id}>{team.name}</option>
+                        <option key={team.id} value={team.id}>
+                          {team.name}
+                        </option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs sm:text-sm font-bold text-cyan-300 mb-2 sm:mb-3">Team B</label>
+                    <label className="block text-xs sm:text-sm font-bold text-cyan-300 mb-2 sm:mb-3">
+                      Team B
+                    </label>
                     <select
+                      title="Select Team B"
                       value={formData.teamBId}
-                      onChange={(e) => setFormData({ ...formData, teamBId: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, teamBId: e.target.value })
+                      }
                       className="w-full px-3 sm:px-4 py-3 bg-slate-700/50 border border-cyan-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition text-sm"
                       required
                     >
                       <option value="">Select Team B</option>
                       {teams.map((team) => (
-                        <option key={team.id} value={team.id} disabled={team.id === formData.teamAId}>
+                        <option
+                          key={team.id}
+                          value={team.id}
+                          disabled={team.id === formData.teamAId}
+                        >
                           {team.name}
                         </option>
                       ))}
@@ -247,13 +332,19 @@ export default function MatchesPage() {
 
         {/* Matches List */}
         <section>
-          <h2 className="text-2xl sm:text-4xl font-black text-white mb-6 sm:mb-8">📋 All Matches</h2>
+          <h2 className="text-2xl sm:text-4xl font-black text-white mb-6 sm:mb-8">
+            📋 All Matches
+          </h2>
           {loading ? (
-            <div className="text-center text-slate-400 py-12 sm:py-16 text-base sm:text-lg">Loading matches...</div>
+            <div className="text-center text-slate-400 py-12 sm:py-16 text-base sm:text-lg">
+              Loading matches...
+            </div>
           ) : matches.length === 0 ? (
             <div className="relative overflow-hidden rounded-xl border border-cyan-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-8 sm:p-16 text-center">
               <div className="text-5xl sm:text-7xl mb-4">🏟️</div>
-              <p className="text-slate-400 text-base sm:text-lg">No matches yet. Create your first match above!</p>
+              <p className="text-slate-400 text-base sm:text-lg">
+                No matches yet. Create your first match above!
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:gap-6">
@@ -263,26 +354,60 @@ export default function MatchesPage() {
                     <div className="relative z-10">
                       <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4 sm:mb-6">
                         <div>
-                          <p className="text-cyan-300 text-xs sm:text-sm font-bold mb-2">{match.name || 'Match'}</p>
+                          <p className="text-cyan-300 text-xs sm:text-sm font-bold mb-2">
+                            {match.name || "Match"}
+                          </p>
                           <h3 className="text-lg sm:text-2xl font-bold text-white">
-                            <span className="text-cyan-400">{match.teamA?.name || 'Team A'}</span> vs <span className="text-green-400">{match.teamB?.name || 'Team B'}</span>
+                            <span className="text-cyan-400">
+                              {match.teamA?.name || "Team A"}
+                            </span>{" "}
+                            vs{" "}
+                            <span className="text-green-400">
+                              {match.teamB?.name || "Team B"}
+                            </span>
                           </h3>
                         </div>
-                        <span className={`px-3 sm:px-4 py-2 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap ${
-                          match.status === 'NOT_STARTED' ? 'bg-gray-500/30 text-gray-300' :
-                          match.status === 'ONGOING' || match.status === 'LIVE' ? 'bg-green-500/30 text-green-300 animate-pulse' :
-                          match.status === 'COMPLETED' ? 'bg-blue-500/30 text-blue-300' :
-                          'bg-red-500/30 text-red-300'
-                        }`}>
-                          {match.status === 'LIVE' || match.status === 'ONGOING' ? '🔴 ' : ''}{match.status.replace('_', ' ')}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-3 sm:px-4 py-2 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap ${
+                              match.status === "NOT_STARTED"
+                                ? "bg-gray-500/30 text-gray-300"
+                                : match.status === "ONGOING" ||
+                                    match.status === "LIVE"
+                                  ? "bg-green-500/30 text-green-300 animate-pulse"
+                                  : match.status === "COMPLETED"
+                                    ? "bg-blue-500/30 text-blue-300"
+                                    : "bg-red-500/30 text-red-300"
+                            }`}
+                          >
+                            {match.status === "LIVE" ||
+                            match.status === "ONGOING"
+                              ? "🔴 "
+                              : ""}
+                            {match.status.replace("_", " ")}
+                          </span>
+                          {isLoggedIn && (
+                            <button
+                              onClick={(e) => handleDeleteMatch(e, match.id)}
+                              className="px-2 sm:px-3 py-2 bg-red-600/30 text-red-400 hover:bg-red-600/50 rounded-lg font-bold text-sm transition-all"
+                              title="Delete match"
+                            >
+                              🗑️
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <div className="flex flex-wrap gap-4 sm:gap-6 text-xs sm:text-sm text-slate-400 mb-4">
                         <span>⏱️ {match.oversLimit} Overs</span>
-                        <span>📅 {new Date(match.createdAt).toLocaleDateString()}</span>
+                        <span>
+                          📅 {new Date(match.createdAt).toLocaleDateString()}
+                        </span>
                       </div>
                       <span className="text-cyan-400 font-bold group-hover:text-cyan-300 transition flex items-center gap-1 text-sm sm:text-base">
-                        View Details <span className="group-hover:translate-x-1 transition">→</span>
+                        View Details{" "}
+                        <span className="group-hover:translate-x-1 transition">
+                          →
+                        </span>
                       </span>
                     </div>
                   </div>
