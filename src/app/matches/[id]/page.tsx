@@ -114,6 +114,7 @@ export default function MatchDetailPage() {
   const [showCoinToss, setShowCoinToss] = useState(false);
   const [isTossing, setIsTossing] = useState(false);
   const [refetchTimer, setRefetchTimer] = useState<NodeJS.Timeout | null>(null);
+  const [backgroundSyncInterval, setBackgroundSyncInterval] = useState<NodeJS.Timeout | null>(null);
 
   // Check authentication on mount
   useEffect(() => {
@@ -328,9 +329,21 @@ export default function MatchDetailPage() {
     if (refetchTimer) clearTimeout(refetchTimer);
     const timer = setTimeout(() => {
       fetchMatch();
-    }, 800); // Batch updates: wait 800ms before refetching
+    }, 5000); // Only refetch every 5 seconds maximum
     setRefetchTimer(timer);
   };
+
+  // Background sync every 10 seconds to catch any misalignments
+  useEffect(() => {
+    if (!matchId || !authorized) return;
+
+    const syncInterval = setInterval(() => {
+      fetchMatch();
+    }, 10000); // Sync every 10 seconds in background
+
+    setBackgroundSyncInterval(syncInterval);
+    return () => clearInterval(syncInterval);
+  }, [matchId, authorized]);
 
   const handleRecordExtra = async (extraType: string) => {
     if (!match || !match.innings[selectedInnings]) return;
@@ -591,11 +604,37 @@ export default function MatchDetailPage() {
         if (response.ok) {
           setCurrentRuns(0);
 
+          // Optimistically remove from local state
+          if ((deleteType as string) === "extra") {
+            setMatch((prevMatch) => {
+              if (!prevMatch) return prevMatch;
+              const updatedInnings = { ...prevMatch.innings[selectedInnings] };
+              updatedInnings.totalRuns = Math.max(0, (updatedInnings.totalRuns || 0) - (lastExtra?.runs || 0));
+              updatedInnings.extras = (updatedInnings.extras || []).filter(e => e.id !== lastExtra?.id);
+              
+              const newInnings = [...prevMatch.innings];
+              newInnings[selectedInnings] = updatedInnings;
+              return { ...prevMatch, innings: newInnings };
+            });
+          } else if ((deleteType as string) === "ball") {
+            setMatch((prevMatch) => {
+              if (!prevMatch) return prevMatch;
+              const updatedInnings = { ...prevMatch.innings[selectedInnings] };
+              updatedInnings.totalRuns = Math.max(0, (updatedInnings.totalRuns || 0) - (lastBall?.runs || 0));
+              updatedInnings.totalBalls = Math.max(0, (updatedInnings.totalBalls || 0) - 1);
+              updatedInnings.balls = (updatedInnings.balls || []).filter(b => b.id !== lastBall?.id);
+              
+              const newInnings = [...prevMatch.innings];
+              newInnings[selectedInnings] = updatedInnings;
+              return { ...prevMatch, innings: newInnings };
+            });
+          }
+
           // Restore striker and non-striker to the previous ball's positions
           setStrikerPlayerId(previousStrikerPlayerId);
           setNonStrikerPlayerId(previousNonStrikerPlayerId);
 
-          // Schedule a batched refetch instead of immediate fetch
+          // Schedule a background sync (don't refetch immediately)
           scheduleRefetch();
         } else {
           const data = await response.json();
@@ -700,16 +739,30 @@ export default function MatchDetailPage() {
 
       if (response.ok) {
         setError("");
+        
+        // Optimistically update local state
+        setMatch((prevMatch) => {
+          if (!prevMatch) return prevMatch;
+          const updatedInnings = { ...prevMatch.innings[selectedInnings] };
+          updatedInnings.totalBalls = (updatedInnings.totalBalls || 0) + 1;
+          updatedInnings.totalRuns = updatedInnings.totalRuns || 0;
+          updatedInnings.balls = [...(updatedInnings.balls || []), lastBall];
+          updatedInnings.wickets = [...(updatedInnings.wickets || []), data];
+          
+          const newInnings = [...prevMatch.innings];
+          newInnings[selectedInnings] = updatedInnings;
+          return { ...prevMatch, innings: newInnings };
+        });
+        
         setShowWicketForm(false);
         setWicketForm({ playerOutId: "", wicketType: "BOWLED", fielderId: "" });
         setStrikerPlayerId(""); // Clear striker since they're now out
 
-        // Refetch to get the updated data with longer delay to ensure DB updates are complete
-        setTimeout(async () => {
-          await fetchMatch();
-          // Check if all batsmen are out after data is fetched
-          await checkAndStartNextInningsIfAllOut();
-        }, 500);
+        // Schedule background sync
+        scheduleRefetch();
+        
+        // Check all-out status immediately (without waiting for fetch)
+        await checkAndStartNextInningsIfAllOut();
       } else {
         setError(data.error || "Failed to record wicket");
       }
@@ -973,18 +1026,19 @@ export default function MatchDetailPage() {
         if (inningsResponse.ok) {
           console.log("Successfully started innings for", fieldingTeam.name);
 
-          // Refetch match data after starting innings
-          const freshResponse = await fetch(`/api/matches/${matchId}`, {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          const newInnings = await inningsResponse.json();
+          
+          // Optimistically update match state with new innings
+          setMatch((prevMatch) => {
+            if (!prevMatch) return prevMatch;
+            return {
+              ...prevMatch,
+              innings: [...prevMatch.innings, newInnings],
+            };
           });
-          const freshMatch = await freshResponse.json();
-
-          // Update match state and switch to the new innings
-          setMatch(freshMatch);
-          // Switch to the newly created innings (last in list)
-          setSelectedInnings(
-            Math.max(0, (freshMatch.innings?.length || 1) - 1),
-          );
+          
+          // Switch to the newly created innings
+          setSelectedInnings(match?.innings.length || 0);
           setStrikerPlayerId("");
           setBowlerId("");
           setCurrentRuns(0);
