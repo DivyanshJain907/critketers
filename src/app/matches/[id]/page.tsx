@@ -1499,6 +1499,39 @@ export default function MatchDetailPage() {
           <>
             {match.innings[selectedInnings] && (
               <>
+                {/* INNINGS SELECTOR TABS */}
+                <div className="mb-6 flex flex-wrap gap-2">
+                  {match.innings.map((innings, idx) => {
+                    const battingTeam =
+                      match.teamA.id === innings.teamId ? match.teamA : match.teamB;
+                    const isSelected = idx === selectedInnings;
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedInnings(idx)}
+                        className={`px-5 py-3 rounded-lg font-bold transition-all transform hover:scale-105 ${
+                          isSelected
+                            ? "bg-linear-to-r from-blue-600 to-cyan-600 text-white shadow-lg shadow-blue-500/50"
+                            : "bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">🏏</span>
+                          <div>
+                            <div className="text-sm">Innings {idx + 1}</div>
+                            <div className="text-xs opacity-75">
+                              {battingTeam.name}
+                            </div>
+                          </div>
+                          <span className="text-lg font-black ml-2">
+                            {innings.totalRuns}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
                 {/* SCOREBOARD */}
                 <section className="mb-8">
                   <div className="relative overflow-hidden rounded-xl border border-green-500/50 bg-linear-to-br from-slate-900/90 to-slate-800/70 p-6 shadow-2xl font-mono text-sm">
@@ -1562,26 +1595,31 @@ export default function MatchDetailPage() {
                   );
                   const allOut =
                     outPlayers.length >= battingTeam.players.length - 1;
-                  const nextInningsAvailable = inningsCount < 2 && allOut;
+                  const maxBalls = (match?.oversLimit ?? 0) * 6;
+                  const oversReached = currentInnings.totalBalls >= maxBalls;
+                  const nextInningsAvailable = inningsCount < 2 && (allOut || oversReached);
 
                   if (!nextInningsAvailable) return null;
 
+                  const reason = allOut ? "All batsmen out" : "Over limit reached";
+                  const reasonEmoji = allOut ? "🚪" : "⏱️";
+
                   return (
-                    <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-xl p-4 md:p-5 mb-4 border border-yellow-400/30 shadow-lg">
-                      <p className="text-yellow-300 text-sm md:text-base font-bold mb-2">
-                        ⚠️ All batsmen out
+                    <div className="bg-linear-to-br from-emerald-900/40 to-teal-900/40 rounded-xl p-5 md:p-6 mb-6 border-2 border-emerald-400/60 shadow-lg animate-pulse">
+                      <p className="text-emerald-300 text-base md:text-lg font-bold mb-2">
+                        {reasonEmoji} {reason}
                       </p>
-                      <p className="text-gray-300 text-xs md:text-sm mb-3">
-                        Start {fieldingTeam.name} innings now.
+                      <p className="text-gray-300 text-sm md:text-base mb-4">
+                        Ready to start <span className="font-bold text-emerald-200">{fieldingTeam.name}</span> innings
                       </p>
                       <button
                         onClick={() => startInnings(fieldingTeam.id)}
                         disabled={isSaving}
-                        className="w-full py-3 md:py-4 px-4 md:px-6 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-xl font-bold text-sm md:text-base transition shadow-lg"
+                        className="w-full py-4 md:py-5 px-6 bg-linear-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-xl font-bold text-base md:text-lg transition-all shadow-lg hover:shadow-emerald-500/50 active:scale-95 transform"
                       >
                         {isSaving
                           ? "⏳ Starting..."
-                          : `▶ Start ${fieldingTeam.name} Innings`}
+                          : `▶️ START ${fieldingTeam.name.toUpperCase()} INNINGS`}
                       </button>
                     </div>
                   );
